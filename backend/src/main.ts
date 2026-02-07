@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import * as cors from 'cors';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -13,9 +13,17 @@ async function bootstrap() {
     allowedHeaders: 'Content-Type, Authorization',
   });
 
-  // Optional: allow all origins during dev (less secure, but useful for testing)
-  // app.enableCors();   // ← uncomment this line instead if want to allow everything
+  // Enable global validation pipes
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // Strip properties that don't have decorators
+      forbidNonWhitelisted: true, // Throw error if non-whitelisted properties are present
+      transform: true, // Automatically transform payloads to DTO instances
+    }),
+  );
 
   await app.listen(4000);
+  console.log('🚀 Server running on http://localhost:4000');
 }
+
 bootstrap();
