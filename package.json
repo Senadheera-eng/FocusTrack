@@ -1,21 +1,30 @@
 {
-  "name": "foucustrack",
+  "name": "focustrack",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "private": true,
+  "description": "Personal Task & Time Tracker - Full-stack app",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev:backend": "npm run start:dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "install-all": "npm install",
+    "build:backend": "npm run build --workspace=backend",
+    "start:backend": "npm run start:prod --workspace=backend"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Senadheera-eng/FoucusTrack.git"
+    "url": "git+https://github.com/Senadheera-eng/FocusTrack.git"
   },
-  "keywords": [],
-  "author": "",
+  "author": "lahiru (your name)",
   "license": "ISC",
-  "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/Senadheera-eng/FoucusTrack/issues"
+    "url": "https://github.com/Senadheera-eng/FocusTrack/issues"
   },
-  "homepage": "https://github.com/Senadheera-eng/FoucusTrack#readme"
+  "homepage": "https://github.com/Senadheera-eng/FocusTrack#readme",
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
 }
