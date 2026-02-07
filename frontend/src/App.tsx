@@ -1,6 +1,14 @@
 // src/App.tsx
 import { Routes, Route, Navigate } from "react-router-dom";
 import AuthForm from "./components/AuthForm";
+import Dashboard from "./pages/Dashboard";
+import { useAuth } from "./context/AuthContext";
+import type { JSX } from "react";
+
+function ProtectedRoute({ children }: { children: JSX.Element }) {
+  const { state } = useAuth();
+  return state.isAuthenticated ? children : <Navigate to="/login" replace />;
+}
 
 function App() {
   return (
@@ -14,24 +22,13 @@ function App() {
       {/* Register */}
       <Route path="/register" element={<AuthForm isLogin={false} />} />
 
-      {/* Dashboard placeholder (after successful login) */}
+      {/* Protected Dashboard – only this one */}
       <Route
         path="/dashboard"
         element={
-          <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50">
-            <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl p-12 max-w-3xl text-center border border-white/30">
-              <h1 className="text-5xl font-bold text-indigo-800 mb-6">
-                Welcome to FlowTrack Dashboard
-              </h1>
-              <p className="text-xl text-gray-700 mb-8">
-                You are logged in successfully!
-              </p>
-              <p className="text-lg text-gray-600">
-                Task creation, time tracking & analytics will appear here
-                soon...
-              </p>
-            </div>
-          </div>
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
         }
       />
 
