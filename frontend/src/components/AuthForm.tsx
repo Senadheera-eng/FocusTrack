@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -6,47 +6,48 @@ import {
   TextField,
   Button,
   Typography,
-  Container,
-  Paper,
+  Checkbox,
+  FormControlLabel,
   InputAdornment,
   IconButton,
   Alert,
   Collapse,
   CircularProgress,
-  Fade,
-  Divider,
-  Stack,
 } from "@mui/material";
 import {
   Visibility,
   VisibilityOff,
-  Email,
-  Lock,
-  Login as LoginIcon,
-  PersonAdd,
   CheckCircle,
+  Person,
 } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
+
+import focusTrackImage from "../assets/focustrack.jpg";
 
 interface AuthFormProps {
   isLogin: boolean;
 }
 
-// Styled components for glassmorphism effect
-const GlassContainer = styled(Paper)(({ theme }) => ({
-  background: "rgba(255, 255, 255, 0.85)",
-  backdropFilter: "blur(20px)",
-  borderRadius: "24px",
-  border: "1px solid rgba(255, 255, 255, 0.3)",
-  boxShadow: "0 8px 32px rgba(0, 0, 0, 0.1)",
-  overflow: "hidden",
-}));
-
-const GradientBox = styled(Box)(({ theme }) => ({
-  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-  padding: theme.spacing(6),
-  textAlign: "center",
+// Styled components
+const Container = styled(Box)({
+  minHeight: "100vh",
+  display: "flex",
+  background: "linear-gradient(135deg, #f5f7fa 0%, #e3e8f0 100%)",
   position: "relative",
+  overflow: "hidden",
+});
+
+const LeftPanel = styled(Box)(({ theme }) => ({
+  flex: "0 0 50%",
+  background: "linear-gradient(135deg, #00d4d4 0%, #00a8a8 100%)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  position: "relative",
+  clipPath: "polygon(0 0, 85% 0, 100% 100%, 0 100%)",
+  [theme.breakpoints.down("md")]: {
+    display: "none",
+  },
   "&::before": {
     content: '""',
     position: "absolute",
@@ -59,19 +60,78 @@ const GradientBox = styled(Box)(({ theme }) => ({
   },
 }));
 
-const StyledButton = styled(Button)(({ theme }) => ({
+const ImageContainer = styled(Box)({
+  position: "relative",
+  zIndex: 1,
+  maxWidth: "500px",
+  width: "80%",
+  "& img": {
+    width: "100%",
+    height: "auto",
+    borderRadius: "20px",
+    boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
+  },
+});
+
+const RightPanel = styled(Box)(({ theme }) => ({
+  flex: 1,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: theme.spacing(4),
+  [theme.breakpoints.down("sm")]: {
+    padding: theme.spacing(2),
+  },
+}));
+
+const FormContainer = styled(Box)(({ theme }) => ({
+  width: "100%",
+  maxWidth: "450px",
+  padding: theme.spacing(5, 4),
+  [theme.breakpoints.down("sm")]: {
+    padding: theme.spacing(3, 2),
+  },
+}));
+
+const StyledTextField = styled(TextField)({
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "8px",
+    backgroundColor: "#fff",
+    transition: "all 0.3s ease",
+    "&:hover": {
+      backgroundColor: "#fafafa",
+    },
+    "&.Mui-focused": {
+      backgroundColor: "#fff",
+      "& fieldset": {
+        borderColor: "#00d4d4",
+        borderWidth: "2px",
+      },
+    },
+  },
+  "& .MuiInputLabel-root.Mui-focused": {
+    color: "#00d4d4",
+  },
+});
+
+const StyledButton = styled(Button)({
+  borderRadius: "8px",
   padding: "14px 32px",
-  borderRadius: "12px",
   fontSize: "16px",
   fontWeight: 600,
   textTransform: "none",
-  boxShadow: "0 4px 14px rgba(102, 126, 234, 0.4)",
+  background: "linear-gradient(135deg, #00d4d4 0%, #00a8a8 100%)",
+  boxShadow: "0 4px 14px rgba(0, 212, 212, 0.4)",
   transition: "all 0.3s ease",
   "&:hover": {
+    background: "linear-gradient(135deg, #00a8a8 0%, #008888 100%)",
     transform: "translateY(-2px)",
-    boxShadow: "0 6px 20px rgba(102, 126, 234, 0.6)",
+    boxShadow: "0 6px 20px rgba(0, 212, 212, 0.5)",
   },
-}));
+  "&:disabled": {
+    background: "#ccc",
+  },
+});
 
 const AuthForm: React.FC<AuthFormProps> = ({ isLogin }) => {
   const [email, setEmail] = useState("");
@@ -79,6 +139,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ isLogin }) => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
@@ -86,25 +147,15 @@ const AuthForm: React.FC<AuthFormProps> = ({ isLogin }) => {
   const { state, login, register } = useAuth();
   const navigate = useNavigate();
 
-  // Reset errors when switching between login/register
-  useEffect(() => {
-    setEmailError("");
-    setPasswordError("");
-    setConfirmPasswordError("");
-    setEmail("");
-    setPassword("");
-    setConfirmPassword("");
-  }, [isLogin]);
-
-  // Validate email format
+  // Validate email
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email) {
-      setEmailError("Email is required");
+      setEmailError("Username is required");
       return false;
     }
     if (!emailRegex.test(email)) {
-      setEmailError("Please enter a valid email address");
+      setEmailError("Please enter a valid email");
       return false;
     }
     setEmailError("");
@@ -144,7 +195,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ isLogin }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate all fields
     const isEmailValid = validateEmail(email);
     const isPasswordValid = validatePassword(password);
     const isConfirmPasswordValid = validateConfirmPassword(confirmPassword);
@@ -164,294 +214,197 @@ const AuthForm: React.FC<AuthFormProps> = ({ isLogin }) => {
         await register(email, password);
       }
 
-      // Navigate on success
       if (!state.error) {
         navigate("/dashboard");
       }
     } catch (error) {
-      // Error is handled by AuthContext
+      // Error handled by AuthContext
     }
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        position: "relative",
-        padding: 2,
-        "&::before": {
-          content: '""',
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background:
-            "radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)",
-        },
-      }}
-    >
-      <Container maxWidth="sm" sx={{ position: "relative", zIndex: 1 }}>
-        <Fade in timeout={800}>
-          <GlassContainer elevation={0}>
-            {/* Header Section */}
-            <GradientBox>
-              <Box sx={{ position: "relative", zIndex: 1 }}>
-                <Typography
-                  variant="h3"
-                  sx={{
-                    color: "white",
-                    fontWeight: 700,
-                    mb: 2,
-                    letterSpacing: "-0.5px",
+    <Container>
+      {/* Left Panel with Image */}
+      <LeftPanel>
+        <ImageContainer>
+          <img src={focusTrackImage} alt="Time Management" />
+        </ImageContainer>
+      </LeftPanel>
+
+      {/* Right Panel with Form */}
+      <RightPanel>
+        <FormContainer>
+          {/* Header */}
+          <Typography
+            variant="h3"
+            sx={{
+              fontWeight: 300,
+              color: "#2d3748",
+              mb: 1,
+              letterSpacing: "2px",
+              textTransform: "uppercase",
+            }}
+          >
+            {isLogin ? "LOGIN" : "SIGN UP"}
+          </Typography>
+
+          {/* Error Alert */}
+          <Collapse in={!!state.error}>
+            <Alert
+              severity="error"
+              sx={{ mb: 3, borderRadius: "8px" }}
+              onClose={() => {}}
+            >
+              {state.error}
+            </Alert>
+          </Collapse>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit}>
+            <Box sx={{ mt: 4 }}>
+              {/* Username/Email Field */}
+              <StyledTextField
+                fullWidth
+                label="Username"
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (emailError) validateEmail(e.target.value);
+                }}
+                onBlur={() => validateEmail(email)}
+                error={!!emailError}
+                helperText={emailError}
+                sx={{ mb: 3 }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <CheckCircle
+                        sx={{
+                          color: email && !emailError ? "#00d4d4" : "#ccc",
+                        }}
+                      />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
+              {/* Password Field */}
+              <StyledTextField
+                fullWidth
+                label="Password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (passwordError) validatePassword(e.target.value);
+                }}
+                onBlur={() => validatePassword(password)}
+                error={!!passwordError}
+                helperText={passwordError}
+                sx={{ mb: isLogin ? 2 : 3 }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                        sx={{ color: "#00d4d4" }}
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
+              {/* Confirm Password (Register Only) */}
+              {!isLogin && (
+                <StyledTextField
+                  fullWidth
+                  label="Confirm Password"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (confirmPasswordError)
+                      validateConfirmPassword(e.target.value);
                   }}
-                >
-                  {isLogin ? "Welcome Back" : "Create Account"}
-                </Typography>
-                <Typography
-                  variant="body1"
-                  sx={{
-                    color: "rgba(255, 255, 255, 0.9)",
-                    fontSize: "16px",
+                  onBlur={() => validateConfirmPassword(confirmPassword)}
+                  error={!!confirmPasswordError}
+                  helperText={confirmPasswordError}
+                  sx={{ mb: 2 }}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={() =>
+                            setShowConfirmPassword(!showConfirmPassword)
+                          }
+                          edge="end"
+                          sx={{ color: "#00d4d4" }}
+                        >
+                          {showConfirmPassword ? (
+                            <VisibilityOff />
+                          ) : (
+                            <Visibility />
+                          )}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
                   }}
-                >
-                  {isLogin
-                    ? "Sign in to access your productivity dashboard"
-                    : "Join FocusTrack and start managing your time"}
-                </Typography>
-              </Box>
-            </GradientBox>
+                />
+              )}
 
-            {/* Form Section */}
-            <Box sx={{ p: 5 }}>
-              {/* Error Alert */}
-              <Collapse in={!!state.error}>
-                <Alert
-                  severity="error"
-                  sx={{
-                    mb: 3,
-                    borderRadius: "12px",
-                    "& .MuiAlert-icon": {
-                      fontSize: "24px",
-                    },
-                  }}
-                >
-                  {state.error}
-                </Alert>
-              </Collapse>
-
-              <form onSubmit={handleSubmit}>
-                <Stack spacing={3}>
-                  {/* Email Field */}
-                  <TextField
-                    fullWidth
-                    label="Email Address"
-                    type="email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      if (emailError) validateEmail(e.target.value);
-                    }}
-                    onBlur={() => validateEmail(email)}
-                    error={!!emailError}
-                    helperText={emailError}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Email sx={{ color: "action.active" }} />
-                        </InputAdornment>
-                      ),
-                      sx: {
-                        borderRadius: "12px",
-                        backgroundColor: "rgba(102, 126, 234, 0.04)",
-                        "& fieldset": {
-                          borderColor: "rgba(102, 126, 234, 0.2)",
-                        },
-                        "&:hover fieldset": {
-                          borderColor: "rgba(102, 126, 234, 0.4) !important",
-                        },
-                      },
-                    }}
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        "&.Mui-focused fieldset": {
-                          borderColor: "#667eea",
-                          borderWidth: "2px",
-                        },
-                      },
-                    }}
-                  />
-
-                  {/* Password Field */}
-                  <TextField
-                    fullWidth
-                    label="Password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => {
-                      setPassword(e.target.value);
-                      if (passwordError) validatePassword(e.target.value);
-                    }}
-                    onBlur={() => validatePassword(password)}
-                    error={!!passwordError}
-                    helperText={
-                      passwordError || (!isLogin && "Minimum 6 characters")
-                    }
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            onClick={() => setShowPassword(!showPassword)}
-                            edge="end"
-                            sx={{ color: "action.active" }}
-                          >
-                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Lock sx={{ color: "action.active" }} />
-                        </InputAdornment>
-                      ),
-                      sx: {
-                        borderRadius: "12px",
-                        backgroundColor: "rgba(102, 126, 234, 0.04)",
-                        "& fieldset": {
-                          borderColor: "rgba(102, 126, 234, 0.2)",
-                        },
-                        "&:hover fieldset": {
-                          borderColor: "rgba(102, 126, 234, 0.4) !important",
-                        },
-                      },
-                    }}
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        "&.Mui-focused fieldset": {
-                          borderColor: "#667eea",
-                          borderWidth: "2px",
-                        },
-                      },
-                    }}
-                  />
-
-                  {/* Confirm Password Field (Register Only) */}
-                  {!isLogin && (
-                    <TextField
-                      fullWidth
-                      label="Confirm Password"
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={confirmPassword}
-                      onChange={(e) => {
-                        setConfirmPassword(e.target.value);
-                        if (confirmPasswordError)
-                          validateConfirmPassword(e.target.value);
-                      }}
-                      onBlur={() => validateConfirmPassword(confirmPassword)}
-                      error={!!confirmPasswordError}
-                      helperText={confirmPasswordError}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <CheckCircle sx={{ color: "action.active" }} />
-                          </InputAdornment>
-                        ),
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton
-                              onClick={() =>
-                                setShowConfirmPassword(!showConfirmPassword)
-                              }
-                              edge="end"
-                              sx={{ color: "action.active" }}
-                            >
-                              {showConfirmPassword ? (
-                                <VisibilityOff />
-                              ) : (
-                                <Visibility />
-                              )}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                        sx: {
-                          borderRadius: "12px",
-                          backgroundColor: "rgba(102, 126, 234, 0.04)",
-                          "& fieldset": {
-                            borderColor: "rgba(102, 126, 234, 0.2)",
-                          },
-                          "&:hover fieldset": {
-                            borderColor: "rgba(102, 126, 234, 0.4) !important",
-                          },
-                        },
-                      }}
+              {/* Remember Me (Login Only) */}
+              {isLogin && (
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
                       sx={{
-                        "& .MuiOutlinedInput-root": {
-                          "&.Mui-focused fieldset": {
-                            borderColor: "#667eea",
-                            borderWidth: "2px",
-                          },
+                        color: "#00d4d4",
+                        "&.Mui-checked": {
+                          color: "#00d4d4",
                         },
                       }}
                     />
-                  )}
+                  }
+                  label={
+                    <Typography variant="body2" color="text.secondary">
+                      Agree to remember the password.
+                    </Typography>
+                  }
+                  sx={{ mb: 3 }}
+                />
+              )}
 
-                  {/* Submit Button */}
-                  <StyledButton
-                    type="submit"
-                    fullWidth
-                    variant="contained"
-                    disabled={state.loading}
-                    startIcon={
-                      state.loading ? (
-                        <CircularProgress size={20} color="inherit" />
-                      ) : isLogin ? (
-                        <LoginIcon />
-                      ) : (
-                        <PersonAdd />
-                      )
-                    }
-                    sx={{
-                      mt: 2,
-                      background:
-                        "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                      "&:disabled": {
-                        background: "rgba(102, 126, 234, 0.5)",
-                      },
-                    }}
-                  >
-                    {state.loading
-                      ? isLogin
-                        ? "Signing In..."
-                        : "Creating Account..."
-                      : isLogin
-                        ? "Sign In"
-                        : "Create Account"}
-                  </StyledButton>
-                </Stack>
-              </form>
-
-              {/* Divider */}
-              <Divider sx={{ my: 4 }}>
-                <Typography variant="body2" color="text.secondary">
-                  OR
-                </Typography>
-              </Divider>
+              {/* Submit Button */}
+              <StyledButton
+                type="submit"
+                fullWidth
+                variant="contained"
+                disabled={state.loading}
+                sx={{ mb: 3 }}
+              >
+                {state.loading ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : isLogin ? (
+                  "SIGN IN"
+                ) : (
+                  "CREATE ACCOUNT"
+                )}
+              </StyledButton>
 
               {/* Toggle Link */}
               <Box sx={{ textAlign: "center" }}>
                 <Typography variant="body2" color="text.secondary">
-                  {isLogin
-                    ? "Don't have an account?"
-                    : "Already have an account?"}
+                  {isLogin ? "No account?" : "Already have an account?"}{" "}
                   <Link
                     to={isLogin ? "/register" : "/login"}
                     style={{
-                      marginLeft: "8px",
-                      color: "#667eea",
+                      color: "#00d4d4",
                       fontWeight: 600,
                       textDecoration: "none",
                     }}
@@ -461,24 +414,10 @@ const AuthForm: React.FC<AuthFormProps> = ({ isLogin }) => {
                 </Typography>
               </Box>
             </Box>
-
-            {/* Footer */}
-            <Box
-              sx={{
-                textAlign: "center",
-                pb: 3,
-                px: 3,
-              }}
-            >
-              <Typography variant="caption" color="text.secondary">
-                © {new Date().getFullYear()} FocusTrack • Built for ANKA
-                Technologies
-              </Typography>
-            </Box>
-          </GlassContainer>
-        </Fade>
-      </Container>
-    </Box>
+          </form>
+        </FormContainer>
+      </RightPanel>
+    </Container>
   );
 };
 
