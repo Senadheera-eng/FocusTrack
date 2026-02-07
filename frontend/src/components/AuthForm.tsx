@@ -22,6 +22,7 @@ import {
 } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
 
+// Import the image - you'll need to place focustrack.jpg in your src/assets folder
 import focusTrackImage from "../assets/focustrack.jpg";
 
 interface AuthFormProps {
@@ -65,11 +66,13 @@ const ImageContainer = styled(Box)({
   zIndex: 1,
   maxWidth: "500px",
   width: "80%",
+  textAlign: "center",
   "& img": {
     width: "100%",
     height: "auto",
     borderRadius: "20px",
     boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
+    marginBottom: "32px",
   },
 });
 
@@ -228,6 +231,31 @@ const AuthForm: React.FC<AuthFormProps> = ({ isLogin }) => {
       <LeftPanel>
         <ImageContainer>
           <img src={focusTrackImage} alt="Time Management" />
+          <Typography
+            variant="h3"
+            sx={{
+              color: "white",
+              fontWeight: 700,
+              mb: 2,
+              textShadow: "0 2px 10px rgba(0, 0, 0, 0.2)",
+            }}
+          >
+            FocusTrack Hub
+          </Typography>
+          <Typography
+            variant="body1"
+            sx={{
+              color: "rgba(255, 255, 255, 0.95)",
+              fontSize: "16px",
+              lineHeight: 1.6,
+              maxWidth: "400px",
+              margin: "0 auto",
+              textShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            Unleash Your Productivity Potential with FocusTrack's Time
+            Management Excellence Platform
+          </Typography>
         </ImageContainer>
       </LeftPanel>
 
