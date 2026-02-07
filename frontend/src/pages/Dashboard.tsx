@@ -17,6 +17,8 @@ import StatsCard from "../components/StatsCard";
 import TaskCard from "../components/TaskCard";
 import EmptyState from "../components/EmptyState";
 import LoadingState from "../components/LoadingState";
+import AddTaskModal from "../components/AddTaskModal";
+import EditTaskModal from "../components/EditTaskModal";
 
 interface Task {
   id: string;
@@ -48,6 +50,11 @@ const Dashboard: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Modal states
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
 
   useEffect(() => {
     fetchTasks();
@@ -95,8 +102,12 @@ const Dashboard: React.FC = () => {
   };
 
   const handleAddTask = () => {
-    // TODO: Open add task modal
-    alert("Add task modal coming soon!");
+    setAddModalOpen(true);
+  };
+
+  const handleEdit = (task: Task) => {
+    setTaskToEdit(task);
+    setEditModalOpen(true);
   };
 
   // Calculate stats
@@ -252,11 +263,28 @@ const Dashboard: React.FC = () => {
                 task={task}
                 onMarkComplete={handleMarkComplete}
                 onDelete={handleDelete}
+                onEdit={handleEdit}
               />
             ))}
           </Box>
         )}
       </Container>
+
+      {/* Modals */}
+      <AddTaskModal
+        open={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        onTaskAdded={fetchTasks}
+      />
+      <EditTaskModal
+        open={editModalOpen}
+        task={taskToEdit}
+        onClose={() => {
+          setEditModalOpen(false);
+          setTaskToEdit(null);
+        }}
+        onTaskUpdated={fetchTasks}
+      />
     </Box>
   );
 };

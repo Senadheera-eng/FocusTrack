@@ -12,7 +12,11 @@ import {
   Stack,
   Fade,
 } from "@mui/material";
-import { CheckCircle, Delete as DeleteIcon } from "@mui/icons-material";
+import {
+  CheckCircle,
+  Delete as DeleteIcon,
+  Edit as EditIcon,
+} from "@mui/icons-material";
 import { format } from "date-fns";
 import { styled } from "@mui/material/styles";
 
@@ -30,6 +34,7 @@ interface TaskCardProps {
   task: Task;
   onMarkComplete: (id: string) => void;
   onDelete: (id: string) => void;
+  onEdit: (task: Task) => void;
 }
 
 const StyledTaskCard = styled(Card)(({ theme }) => ({
@@ -51,6 +56,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
   task,
   onMarkComplete,
   onDelete,
+  onEdit,
 }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -144,6 +150,17 @@ const TaskCard: React.FC<TaskCardProps> = ({
               Complete
             </Button>
           )}
+          <IconButton
+            color="primary"
+            onClick={() => onEdit(task)}
+            sx={{
+              "&:hover": {
+                bgcolor: "rgba(0, 212, 212, 0.1)",
+              },
+            }}
+          >
+            <EditIcon />
+          </IconButton>
           <IconButton
             color="error"
             onClick={() => onDelete(task.id)}
