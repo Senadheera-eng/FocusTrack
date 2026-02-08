@@ -68,6 +68,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<"todo" | "in_progress" | "done">("todo");
+  const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [titleError, setTitleError] = useState("");
@@ -100,11 +101,13 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
         title: title.trim(),
         description: description.trim() || undefined,
         status,
+        priority,
       });
 
       setTitle("");
       setDescription("");
       setStatus("todo");
+      setPriority("medium");
       onTaskAdded();
       onClose();
     } catch (err: any) {
@@ -119,6 +122,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
       setTitle("");
       setDescription("");
       setStatus("todo");
+      setPriority("medium");
       setError("");
       setTitleError("");
       onClose();
@@ -217,6 +221,21 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
               <MenuItem value="todo">To Do</MenuItem>
               <MenuItem value="in_progress">In Progress</MenuItem>
               <MenuItem value="done">Done</MenuItem>
+            </StyledTextField>
+
+            <StyledTextField
+              select
+              label="Priority"
+              value={priority}
+              onChange={(e) =>
+                setPriority(e.target.value as "low" | "medium" | "high")
+              }
+              fullWidth
+              disabled={loading}
+            >
+              <MenuItem value="low">Low</MenuItem>
+              <MenuItem value="medium">Medium</MenuItem>
+              <MenuItem value="high">High</MenuItem>
             </StyledTextField>
           </Box>
         </DialogContent>

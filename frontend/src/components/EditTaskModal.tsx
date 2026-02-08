@@ -21,6 +21,7 @@ interface Task {
   title: string;
   description?: string;
   status: "todo" | "in_progress" | "done";
+  priority: "low" | "medium" | "high";
 }
 
 interface EditTaskModalProps {
@@ -77,6 +78,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<"todo" | "in_progress" | "done">("todo");
+  const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [titleError, setTitleError] = useState("");
@@ -86,6 +88,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
       setTitle(task.title);
       setDescription(task.description || "");
       setStatus(task.status);
+      setPriority(task.priority);
       setError("");
       setTitleError("");
     }
@@ -121,6 +124,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
         title: title.trim(),
         description: description.trim() || undefined,
         status,
+        priority,
       });
 
       onTaskUpdated();
@@ -234,6 +238,21 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
               <MenuItem value="todo">To Do</MenuItem>
               <MenuItem value="in_progress">In Progress</MenuItem>
               <MenuItem value="done">Done</MenuItem>
+            </StyledTextField>
+
+            <StyledTextField
+              select
+              label="Priority"
+              value={priority}
+              onChange={(e) =>
+                setPriority(e.target.value as "low" | "medium" | "high")
+              }
+              fullWidth
+              disabled={loading}
+            >
+              <MenuItem value="low">Low</MenuItem>
+              <MenuItem value="medium">Medium</MenuItem>
+              <MenuItem value="high">High</MenuItem>
             </StyledTextField>
           </Box>
         </DialogContent>

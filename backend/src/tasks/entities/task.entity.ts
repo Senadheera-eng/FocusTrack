@@ -15,6 +15,9 @@ export class Task {
   @Column({ default: 'todo' })
   status: 'todo' | 'in_progress' | 'done';
 
+  @Column({ default: 'medium' })
+  priority: 'low' | 'medium' | 'high';
+
   @ManyToOne(() => User, user => user.tasks, { onDelete: 'CASCADE' })
   user: User;
 

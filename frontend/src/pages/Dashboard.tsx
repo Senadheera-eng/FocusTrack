@@ -21,6 +21,8 @@ import {
   DateRange,
   LocalFireDepartment,
   Schedule,
+  Search as SearchIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 import { styled, keyframes } from "@mui/material/styles";
 
@@ -38,6 +40,7 @@ interface Task {
   title: string;
   description?: string;
   status: "todo" | "in_progress" | "done";
+  priority: "low" | "medium" | "high";
   createdAt: string;
   updatedAt: string;
   completedAt?: string;
@@ -146,6 +149,7 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "todo" | "in_progress" | "done">("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [prodStats, setProdStats] = useState<ProductivityStats | null>(null);
 
@@ -232,8 +236,15 @@ const Dashboard: React.FC = () => {
   };
 
   // Filtered tasks
-  const filteredTasks =
-    filter === "all" ? tasks : tasks.filter((t) => t.status === filter);
+  const filteredTasks = tasks.filter((t) => {
+    const matchesFilter = filter === "all" || t.status === filter;
+    const query = searchQuery.toLowerCase().trim();
+    const matchesSearch =
+      !query ||
+      t.title.toLowerCase().includes(query) ||
+      (t.description && t.description.toLowerCase().includes(query));
+    return matchesFilter && matchesSearch;
+  });
 
   if (!state.isAuthenticated) {
     return (
@@ -493,13 +504,59 @@ const Dashboard: React.FC = () => {
                 Done ({stats.completed})
               </FilterChip>
             </Box>
-            <AddTaskButton
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleAddTask}
-            >
-              Add Task
-            </AddTaskButton>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  background: "rgba(255, 255, 255, 0.7)",
+                  backdropFilter: "blur(8px)",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(0, 0, 0, 0.08)",
+                  px: 1.5,
+                  py: 0.5,
+                  transition: "all 0.3s ease",
+                  "&:focus-within": {
+                    borderColor: "#0891b2",
+                    boxShadow: "0 2px 12px rgba(8, 145, 178, 0.1)",
+                    background: "rgba(255, 255, 255, 0.95)",
+                  },
+                }}
+              >
+                <SearchIcon sx={{ color: "#94a3b8", fontSize: 20, mr: 1 }} />
+                <input
+                  type="text"
+                  placeholder="Search tasks..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    border: "none",
+                    outline: "none",
+                    background: "transparent",
+                    fontSize: "13.5px",
+                    color: "#0f172a",
+                    width: "160px",
+                    fontFamily: "inherit",
+                  }}
+                />
+                {searchQuery && (
+                  <IconButton
+                    size="small"
+                    onClick={() => setSearchQuery("")}
+                    sx={{ color: "#94a3b8", p: 0.25, "&:hover": { color: "#64748b" } }}
+                  >
+                    <CloseIcon sx={{ fontSize: 16 }} />
+                  </IconButton>
+                )}
+              </Box>
+              <AddTaskButton
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={handleAddTask}
+              >
+                Add Task
+              </AddTaskButton>
+            </Box>
           </Box>
 
           {/* Error Alert */}
@@ -523,7 +580,7 @@ const Dashboard: React.FC = () => {
           {loading ? (
             <LoadingState />
           ) : filteredTasks.length === 0 ? (
-            filter === "all" ? (
+            filter === "all" && !searchQuery ? (
               <EmptyState onAddTask={handleAddTask} />
             ) : (
               <Box
@@ -537,13 +594,13 @@ const Dashboard: React.FC = () => {
                   variant="h6"
                   sx={{ color: "#94a3b8", fontWeight: 600 }}
                 >
-                  No tasks in this category
+                  {searchQuery ? "No tasks match your search" : "No tasks in this category"}
                 </Typography>
                 <Typography
                   variant="body2"
                   sx={{ color: "#cbd5e1", mt: 1 }}
                 >
-                  Try selecting a different filter
+                  {searchQuery ? "Try a different search term" : "Try selecting a different filter"}
                 </Typography>
               </Box>
             )

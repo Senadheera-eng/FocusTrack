@@ -14,4 +14,8 @@ export class UpdateTaskDto {
   @IsEnum(['todo', 'in_progress', 'done'], { message: 'Status must be todo, in_progress, or done' })
   @IsOptional()
   status?: 'todo' | 'in_progress' | 'done';
+
+  @IsEnum(['low', 'medium', 'high'], { message: 'Priority must be low, medium, or high' })
+  @IsOptional()
+  priority?: 'low' | 'medium' | 'high';
 }
