@@ -65,7 +65,7 @@ const navItems = [
   { icon: SpaceDashboard, label: "Dashboard", path: "/dashboard" },
   { icon: Assignment, label: "My Tasks", path: "/my-tasks" },
   { icon: Analytics, label: "Analytics", path: "/analytics" },
-  { icon: Settings, label: "Settings", path: "/settings", disabled: true },
+  { icon: Settings, label: "Settings", path: "/settings" },
 ];
 
 // ======================== COMPONENT ========================
@@ -89,7 +89,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     : "FT";
 
   const handleNavClick = (item: (typeof navItems)[number]) => {
-    if (item.disabled) return;
     navigate(item.path);
     if (isMobile) onMobileClose();
   };
@@ -202,8 +201,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 px: 2,
                 py: 1.5,
                 borderRadius: "14px",
-                cursor: item.disabled ? "default" : "pointer",
-                opacity: item.disabled ? 0.35 : 1,
+                cursor: "pointer",
                 background: isActive
                   ? "rgba(255, 255, 255, 0.15)"
                   : "transparent",
@@ -212,8 +210,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   ? "1px solid rgba(255, 255, 255, 0.15)"
                   : "1px solid transparent",
                 transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-                ...(!item.disabled &&
-                  !isActive && {
+                ...(!isActive && {
                     "&:hover": {
                       background: "rgba(255, 255, 255, 0.08)",
                       border: "1px solid rgba(255, 255, 255, 0.08)",
@@ -236,20 +233,6 @@ const Sidebar: React.FC<SidebarProps> = ({
               >
                 {item.label}
               </Typography>
-              {item.disabled && (
-                <Typography
-                  sx={{
-                    color: "rgba(255,255,255,0.3)",
-                    fontSize: "9px",
-                    fontWeight: 600,
-                    letterSpacing: "0.5px",
-                    ml: "auto",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Soon
-                </Typography>
-              )}
             </Box>
           );
         })}

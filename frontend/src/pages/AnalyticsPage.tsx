@@ -15,7 +15,7 @@ import {
   Schedule,
   AccessTime,
 } from "@mui/icons-material";
-import { styled, keyframes } from "@mui/material/styles";
+import { keyframes } from "@mui/material/styles";
 
 import Sidebar, { SIDEBAR_WIDTH } from "../components/Sidebar";
 import StatsCard from "../components/StatsCard";

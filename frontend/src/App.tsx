@@ -4,6 +4,7 @@ import AuthForm from "./components/AuthForm";
 import Dashboard from "./pages/Dashboard";
 import MyTasksPage from "./pages/MyTasksPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
+import SettingsPage from "./pages/SettingsPage";
 import { useAuth } from "./context/AuthContext";
 import type { JSX } from "react";
 
@@ -46,6 +47,15 @@ function App() {
         element={
           <ProtectedRoute>
             <AnalyticsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <SettingsPage />
           </ProtectedRoute>
         }
       />

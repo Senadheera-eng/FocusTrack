@@ -193,8 +193,17 @@ export class TimeEntriesService {
       },
     });
 
-    const hoursTrackedToday = todayEntries.reduce((sum, e) => sum + e.duration, 0) / 3600;
-    const hoursTrackedThisWeek = weekEntries.reduce((sum, e) => sum + e.duration, 0) / 3600;
+    // Include elapsed time for active timers (duration stays 0 until stopped)
+    const nowMs = Date.now();
+    const calcDuration = (e: TimeEntry) => {
+      if (e.endTime === null) {
+        return Math.floor((nowMs - new Date(e.startTime).getTime()) / 1000);
+      }
+      return e.duration;
+    };
+
+    const hoursTrackedToday = todayEntries.reduce((sum, e) => sum + calcDuration(e), 0) / 3600;
+    const hoursTrackedThisWeek = weekEntries.reduce((sum, e) => sum + calcDuration(e), 0) / 3600;
 
     // --- Streak: consecutive days with at least one completed task ---
     let streakDays = 0;
