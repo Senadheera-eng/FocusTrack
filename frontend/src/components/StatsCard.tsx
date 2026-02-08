@@ -4,7 +4,7 @@ import type { SvgIconComponent } from "@mui/icons-material";
 
 interface StatsCardProps {
   icon: SvgIconComponent;
-  value: number;
+  value: number | string;
   label: string;
   color: string;
   bgColor: string;
