@@ -1,7 +1,6 @@
-import React, {
+import {
   createContext,
   useReducer,
-  useEffect,
   type ReactNode,
   useContext,
 } from "react";

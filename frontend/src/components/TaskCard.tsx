@@ -1,16 +1,11 @@
 import React from "react";
 import {
-  Card,
-  CardContent,
-  CardActions,
   Box,
   Typography,
   Chip,
   Button,
   IconButton,
-  Divider,
   Stack,
-  Fade,
 } from "@mui/material";
 import {
   CheckCircle,
@@ -18,7 +13,6 @@ import {
   Edit as EditIcon,
 } from "@mui/icons-material";
 import { format } from "date-fns";
-import { styled } from "@mui/material/styles";
 import Timer from "./Timer";
 
 interface Task {
@@ -38,20 +32,31 @@ interface TaskCardProps {
   onEdit: (task: Task) => void;
 }
 
-const StyledTaskCard = styled(Card)(({ theme }) => ({
-  borderRadius: "16px",
-  border: "1px solid rgba(0, 212, 212, 0.15)",
-  boxShadow: "0 2px 12px rgba(0, 0, 0, 0.06)",
-  transition: "all 0.3s ease",
-  height: "100%",
-  display: "flex",
-  flexDirection: "column",
-  "&:hover": {
-    transform: "translateY(-4px)",
-    boxShadow: "0 8px 24px rgba(0, 212, 212, 0.2)",
-    borderColor: "rgba(0, 212, 212, 0.4)",
-  },
-}));
+const getStatusConfig = (status: string) => {
+  switch (status) {
+    case "done":
+      return {
+        label: "Completed",
+        color: "#10b981",
+        bgColor: "rgba(16, 185, 129, 0.08)",
+        borderColor: "rgba(16, 185, 129, 0.3)",
+      };
+    case "in_progress":
+      return {
+        label: "In Progress",
+        color: "#f59e0b",
+        bgColor: "rgba(245, 158, 11, 0.08)",
+        borderColor: "rgba(245, 158, 11, 0.3)",
+      };
+    default:
+      return {
+        label: "To Do",
+        color: "#8b5cf6",
+        bgColor: "rgba(139, 92, 246, 0.08)",
+        borderColor: "rgba(139, 92, 246, 0.3)",
+      };
+  }
+};
 
 const TaskCard: React.FC<TaskCardProps> = ({
   task,
@@ -59,128 +64,180 @@ const TaskCard: React.FC<TaskCardProps> = ({
   onDelete,
   onEdit,
 }) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "done":
-        return "success";
-      case "in_progress":
-        return "warning";
-      default:
-        return "default";
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "todo":
-        return "To Do";
-      case "in_progress":
-        return "In Progress";
-      case "done":
-        return "Completed";
-      default:
-        return status;
-    }
-  };
+  const statusConfig = getStatusConfig(task.status);
 
   return (
-    <Fade in>
-      <StyledTaskCard>
-        <CardContent sx={{ flexGrow: 1 }}>
-          <Box
+    <Box
+      sx={{
+        background: "rgba(255, 255, 255, 0.7)",
+        backdropFilter: "blur(16px)",
+        borderRadius: "18px",
+        border: "1px solid rgba(255, 255, 255, 0.8)",
+        borderLeft: `4px solid ${statusConfig.borderColor}`,
+        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.04)",
+        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        "&:hover": {
+          transform: "translateY(-4px)",
+          boxShadow: "0 12px 28px rgba(0, 0, 0, 0.08)",
+          background: "rgba(255, 255, 255, 0.85)",
+          borderLeftColor: statusConfig.color,
+        },
+      }}
+    >
+      {/* Header */}
+      <Box sx={{ p: 3, pb: 0 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            mb: 1.5,
+          }}
+        >
+          <Typography
+            variant="h6"
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              mb: 2,
+              fontWeight: 700,
+              color: "#0f172a",
+              lineHeight: 1.3,
+              flex: 1,
+              fontSize: "16px",
             }}
           >
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 600,
-                color: "#2d3748",
-                lineHeight: 1.3,
-                flex: 1,
-              }}
-            >
-              {task.title}
-            </Typography>
-            <Chip
-              label={getStatusLabel(task.status)}
-              color={getStatusColor(task.status)}
-              size="small"
-              sx={{ ml: 1, fontWeight: 600 }}
-            />
-          </Box>
+            {task.title}
+          </Typography>
+          <Chip
+            label={statusConfig.label}
+            size="small"
+            sx={{
+              ml: 1.5,
+              fontWeight: 600,
+              fontSize: "11px",
+              height: "26px",
+              color: statusConfig.color,
+              backgroundColor: statusConfig.bgColor,
+              border: `1px solid ${statusConfig.borderColor}`,
+              "& .MuiChip-label": { px: 1.5 },
+            }}
+          />
+        </Box>
 
-          {task.description && (
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              {task.description}
+        {task.description && (
+          <Typography
+            variant="body2"
+            sx={{
+              color: "#64748b",
+              mb: 2,
+              fontSize: "13.5px",
+              lineHeight: 1.6,
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {task.description}
+          </Typography>
+        )}
+      </Box>
+
+      {/* Timer */}
+      <Box sx={{ px: 3, py: 1.5, flex: 1 }}>
+        <Timer taskId={task.id} />
+      </Box>
+
+      {/* Footer */}
+      <Box
+        sx={{
+          px: 3,
+          py: 2,
+          borderTop: "1px solid rgba(0, 0, 0, 0.04)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mt: "auto",
+        }}
+      >
+        <Stack spacing={0.5}>
+          <Typography
+            variant="caption"
+            sx={{ color: "#94a3b8", fontSize: "11.5px" }}
+          >
+            {format(new Date(task.createdAt), "MMM d, yyyy")}
+          </Typography>
+          {task.completedAt && (
+            <Typography
+              variant="caption"
+              sx={{ color: "#10b981", fontSize: "11.5px", fontWeight: 600 }}
+            >
+              Done {format(new Date(task.completedAt), "MMM d")}
             </Typography>
           )}
+        </Stack>
 
-          {/* Timer Component */}
-          <Box sx={{ mb: 2 }}>
-            <Timer taskId={task.id} />
-          </Box>
-
-          <Divider sx={{ my: 2 }} />
-
-          <Stack spacing={1}>
-            <Typography variant="caption" color="text.secondary">
-              Created: {format(new Date(task.createdAt), "MMM d, yyyy")}
-            </Typography>
-            {task.completedAt && (
-              <Typography variant="caption" sx={{ color: "#4caf50" }}>
-                Completed: {format(new Date(task.completedAt), "MMM d, yyyy")}
-              </Typography>
-            )}
-          </Stack>
-        </CardContent>
-
-        <CardActions sx={{ p: 2, pt: 0 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
           {task.status !== "done" && (
             <Button
-              fullWidth
+              size="small"
               variant="contained"
-              color="success"
-              startIcon={<CheckCircle />}
+              startIcon={<CheckCircle sx={{ fontSize: "16px !important" }} />}
               onClick={() => onMarkComplete(task.id)}
               sx={{
                 borderRadius: "10px",
                 textTransform: "none",
                 fontWeight: 600,
+                fontSize: "12px",
+                px: 1.5,
+                py: 0.5,
+                background: "linear-gradient(135deg, #10b981, #059669)",
+                boxShadow: "0 2px 8px rgba(16, 185, 129, 0.25)",
+                minWidth: "auto",
+                "&:hover": {
+                  background: "linear-gradient(135deg, #059669, #047857)",
+                  boxShadow: "0 4px 12px rgba(16, 185, 129, 0.35)",
+                },
               }}
             >
-              Complete
+              Done
             </Button>
           )}
           <IconButton
-            color="primary"
+            size="small"
             onClick={() => onEdit(task)}
             sx={{
+              color: "#94a3b8",
+              width: 32,
+              height: 32,
               "&:hover": {
-                bgcolor: "rgba(0, 212, 212, 0.1)",
+                color: "#0891b2",
+                bgcolor: "rgba(8, 145, 178, 0.08)",
               },
             }}
           >
-            <EditIcon />
+            <EditIcon sx={{ fontSize: 18 }} />
           </IconButton>
           <IconButton
-            color="error"
+            size="small"
             onClick={() => onDelete(task.id)}
             sx={{
+              color: "#94a3b8",
+              width: 32,
+              height: 32,
               "&:hover": {
-                bgcolor: "rgba(244, 67, 54, 0.1)",
+                color: "#ef4444",
+                bgcolor: "rgba(239, 68, 68, 0.08)",
               },
             }}
           >
-            <DeleteIcon />
+            <DeleteIcon sx={{ fontSize: 18 }} />
           </IconButton>
-        </CardActions>
-      </StyledTaskCard>
-    </Fade>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 
