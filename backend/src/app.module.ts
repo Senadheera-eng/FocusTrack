@@ -6,13 +6,14 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { TasksModule } from './tasks/tasks.module';
+import { TimeEntriesModule } from './time-entries/time-entries.module';
 
 @Module({
   imports: [
     // 1. Load .env globally
     ConfigModule.forRoot({
-      isGlobal: true,              // makes ConfigService available everywhere
-      envFilePath: '.env',         // path relative to backend folder
+      isGlobal: true,
+      envFilePath: '.env',
     }),
 
     // 2. Connect to PostgreSQL using values from .env
@@ -24,18 +25,17 @@ import { TasksModule } from './tasks/tasks.module';
         username: configService.get<string>('DATABASE_USERNAME'),
         password: configService.get<string>('DATABASE_PASSWORD'),
         database: configService.get<string>('DATABASE_NAME'),
-        autoLoadEntities: true,       // auto finds all your entities later
-        synchronize: configService.get<boolean>('DATABASE_SYNCHRONIZE', false), // true only in dev!
-        logging: ['query', 'error'],  // shows SQL queries in terminal (helpful)
+        autoLoadEntities: true,
+        synchronize: configService.get<boolean>('DATABASE_SYNCHRONIZE', false),
+        logging: ['query', 'error'],
       }),
-      inject: [ConfigService],        // ← this injects ConfigService into useFactory
+      inject: [ConfigService],
     }),
 
     UsersModule,
-
     AuthModule,
-
     TasksModule,
+    TimeEntriesModule, // ← NEW: Time tracking module
   ],
   controllers: [AppController],
   providers: [AppService],

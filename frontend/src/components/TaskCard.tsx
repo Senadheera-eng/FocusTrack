@@ -19,6 +19,7 @@ import {
 } from "@mui/icons-material";
 import { format } from "date-fns";
 import { styled } from "@mui/material/styles";
+import Timer from "./Timer";
 
 interface Task {
   id: string;
@@ -118,6 +119,11 @@ const TaskCard: React.FC<TaskCardProps> = ({
               {task.description}
             </Typography>
           )}
+
+          {/* Timer Component */}
+          <Box sx={{ mb: 2 }}>
+            <Timer taskId={task.id} />
+          </Box>
 
           <Divider sx={{ my: 2 }} />
 

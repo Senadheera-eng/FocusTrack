@@ -15,6 +15,7 @@ const app_service_1 = require("./app.service");
 const users_module_1 = require("./users/users.module");
 const auth_module_1 = require("./auth/auth.module");
 const tasks_module_1 = require("./tasks/tasks.module");
+const time_entries_module_1 = require("./time-entries/time-entries.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -42,6 +43,7 @@ exports.AppModule = AppModule = __decorate([
             users_module_1.UsersModule,
             auth_module_1.AuthModule,
             tasks_module_1.TasksModule,
+            time_entries_module_1.TimeEntriesModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

@@ -56,6 +56,11 @@ export class TasksService {
   async update(id: string, updateTaskDto: UpdateTaskDto, user: User): Promise<Task> {
     const task = await this.findOne(id, user);
     
+    // Check if there are any fields to update
+    if (Object.keys(updateTaskDto).length === 0) {
+      return task; // No changes, return existing task
+    }
+    
     // Update fields
     Object.assign(task, updateTaskDto);
     
