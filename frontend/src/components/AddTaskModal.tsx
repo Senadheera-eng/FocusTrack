@@ -22,20 +22,42 @@ interface AddTaskModalProps {
   onTaskAdded: () => void;
 }
 
-const StyledDialog = styled(Dialog)(({ theme }) => ({
+const StyledDialog = styled(Dialog)({
   "& .MuiDialog-paper": {
-    borderRadius: "16px",
+    borderRadius: "20px",
     maxWidth: "500px",
     width: "100%",
+    background: "rgba(255, 255, 255, 0.95)",
+    backdropFilter: "blur(20px)",
+    border: "1px solid rgba(255, 255, 255, 0.8)",
+    boxShadow: "0 24px 48px rgba(0, 0, 0, 0.12)",
   },
-}));
+  "& .MuiBackdrop-root": {
+    backdropFilter: "blur(8px)",
+    background: "rgba(15, 23, 42, 0.3)",
+  },
+});
 
-const StyledButton = styled(Button)({
-  borderRadius: "10px",
-  padding: "10px 24px",
-  textTransform: "none",
-  fontWeight: 600,
-  transition: "all 0.3s ease",
+const StyledTextField = styled(TextField)({
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "14px",
+    backgroundColor: "rgba(248, 250, 252, 0.6)",
+    transition: "all 0.3s ease",
+    "&:hover": {
+      backgroundColor: "rgba(248, 250, 252, 0.9)",
+    },
+    "&.Mui-focused": {
+      backgroundColor: "rgba(255, 255, 255, 1)",
+      boxShadow: "0 2px 12px rgba(8, 145, 178, 0.08)",
+      "& fieldset": {
+        borderColor: "#0891b2",
+        borderWidth: "2px",
+      },
+    },
+  },
+  "& .MuiInputLabel-root.Mui-focused": {
+    color: "#0891b2",
+  },
 });
 
 const AddTaskModal: React.FC<AddTaskModalProps> = ({
@@ -66,7 +88,6 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate
     if (!validateTitle(title)) {
       return;
     }
@@ -81,11 +102,10 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
         status,
       });
 
-      // Success - reset form and close
       setTitle("");
       setDescription("");
       setStatus("todo");
-      onTaskAdded(); // Refresh tasks list
+      onTaskAdded();
       onClose();
     } catch (err: any) {
       setError(err.response?.data?.message || "Failed to create task");
@@ -112,35 +132,51 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          pb: 1,
         }}
       >
         <Box
           sx={{
-            fontWeight: 700,
-            fontSize: "24px",
-            background: "linear-gradient(135deg, #00d4d4 0%, #00a8a8 100%)",
+            fontWeight: 800,
+            fontSize: "22px",
+            background: "linear-gradient(135deg, #00d4d4 0%, #0891b2 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
+            letterSpacing: "-0.3px",
           }}
         >
           Create New Task
         </Box>
-        <IconButton onClick={handleClose} disabled={loading}>
+        <IconButton
+          onClick={handleClose}
+          disabled={loading}
+          sx={{
+            color: "#94a3b8",
+            "&:hover": { color: "#64748b", bgcolor: "rgba(0,0,0,0.04)" },
+          }}
+        >
           <CloseIcon />
         </IconButton>
       </DialogTitle>
 
       <form onSubmit={handleSubmit}>
-        <DialogContent dividers>
+        <DialogContent sx={{ pt: 2 }}>
           {error && (
-            <Alert severity="error" sx={{ mb: 2, borderRadius: "8px" }}>
+            <Alert
+              severity="error"
+              sx={{
+                mb: 2.5,
+                borderRadius: "12px",
+                background: "rgba(239, 68, 68, 0.06)",
+                border: "1px solid rgba(239, 68, 68, 0.12)",
+              }}
+            >
               {error}
             </Alert>
           )}
 
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-            {/* Title Field */}
-            <TextField
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+            <StyledTextField
               label="Task Title"
               value={title}
               onChange={(e) => {
@@ -154,19 +190,9 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
               fullWidth
               autoFocus
               disabled={loading}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "10px",
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#00d4d4",
-                    borderWidth: "2px",
-                  },
-                },
-              }}
             />
 
-            {/* Description Field */}
-            <TextField
+            <StyledTextField
               label="Description (Optional)"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -176,19 +202,9 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
               disabled={loading}
               helperText={`${description.length}/1000 characters`}
               inputProps={{ maxLength: 1000 }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "10px",
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#00d4d4",
-                    borderWidth: "2px",
-                  },
-                },
-              }}
             />
 
-            {/* Status Field */}
-            <TextField
+            <StyledTextField
               select
               label="Status"
               value={status}
@@ -197,60 +213,63 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
               }
               fullWidth
               disabled={loading}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "10px",
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#00d4d4",
-                    borderWidth: "2px",
-                  },
-                },
-              }}
             >
               <MenuItem value="todo">To Do</MenuItem>
               <MenuItem value="in_progress">In Progress</MenuItem>
               <MenuItem value="done">Done</MenuItem>
-            </TextField>
+            </StyledTextField>
           </Box>
         </DialogContent>
 
-        <DialogActions sx={{ p: 2.5, gap: 1 }}>
-          <StyledButton
+        <DialogActions sx={{ p: 3, pt: 1, gap: 1.5 }}>
+          <Button
             onClick={handleClose}
             disabled={loading}
             sx={{
-              color: "#666",
+              borderRadius: "12px",
+              padding: "10px 24px",
+              textTransform: "none",
+              fontWeight: 600,
+              color: "#64748b",
               "&:hover": {
-                backgroundColor: "#f5f5f5",
+                backgroundColor: "rgba(0, 0, 0, 0.04)",
               },
             }}
           >
             Cancel
-          </StyledButton>
-          <StyledButton
+          </Button>
+          <Button
             type="submit"
             variant="contained"
             disabled={loading || !title.trim()}
             sx={{
-              background: "linear-gradient(135deg, #00d4d4 0%, #00a8a8 100%)",
-              color: "white",
+              borderRadius: "12px",
+              padding: "10px 28px",
+              textTransform: "none",
+              fontWeight: 700,
+              background: "linear-gradient(135deg, #00d4d4 0%, #0891b2 100%)",
+              boxShadow: "0 4px 14px rgba(0, 212, 212, 0.25)",
+              transition: "all 0.3s ease",
               "&:hover": {
-                background: "linear-gradient(135deg, #00a8a8 0%, #008888 100%)",
+                background: "linear-gradient(135deg, #0891b2 0%, #0e7490 100%)",
+                transform: "translateY(-1px)",
+                boxShadow: "0 6px 20px rgba(0, 212, 212, 0.35)",
               },
               "&:disabled": {
-                background: "#ccc",
+                background: "#e2e8f0",
+                boxShadow: "none",
               },
             }}
           >
             {loading ? (
               <>
-                <CircularProgress size={20} sx={{ mr: 1 }} />
+                <CircularProgress size={20} sx={{ mr: 1, color: "inherit" }} />
                 Creating...
               </>
             ) : (
               "Create Task"
             )}
-          </StyledButton>
+          </Button>
         </DialogActions>
       </form>
     </StyledDialog>

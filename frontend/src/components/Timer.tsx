@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Box, IconButton, Typography, Tooltip } from "@mui/material";
 import { PlayArrow, Stop, Timer as TimerIcon } from "@mui/icons-material";
-import { styled } from "@mui/material/styles";
+import { keyframes } from "@mui/material/styles";
 import axios from "axios";
 
 interface TimerProps {
@@ -9,43 +9,10 @@ interface TimerProps {
   onTimeUpdate?: () => void;
 }
 
-const TimerContainer = styled(Box)(({ theme }) => ({
-  display: "flex",
-  alignItems: "center",
-  gap: theme.spacing(1),
-  padding: theme.spacing(1),
-  borderRadius: "12px",
-  backgroundColor: "rgba(0, 212, 212, 0.05)",
-  border: "1px solid rgba(0, 212, 212, 0.2)",
-}));
-
-const PlayButton = styled(IconButton)({
-  background: "linear-gradient(135deg, #4caf50 0%, #45a049 100%)",
-  color: "white",
-  padding: "8px",
-  "&:hover": {
-    background: "linear-gradient(135deg, #45a049 0%, #3d8b40 100%)",
-    transform: "scale(1.05)",
-  },
-  "&:disabled": {
-    background: "#ccc",
-  },
-  transition: "all 0.3s ease",
-});
-
-const StopButton = styled(IconButton)({
-  background: "linear-gradient(135deg, #f44336 0%, #d32f2f 100%)",
-  color: "white",
-  padding: "8px",
-  "&:hover": {
-    background: "linear-gradient(135deg, #d32f2f 0%, #c62828 100%)",
-    transform: "scale(1.05)",
-  },
-  "&:disabled": {
-    background: "#ccc",
-  },
-  transition: "all 0.3s ease",
-});
+const pulse = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+`;
 
 const Timer: React.FC<TimerProps> = ({ taskId, onTimeUpdate }) => {
   const [isRunning, setIsRunning] = useState(false);
@@ -54,13 +21,11 @@ const Timer: React.FC<TimerProps> = ({ taskId, onTimeUpdate }) => {
   const [totalSeconds, setTotalSeconds] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  // Check if there's an active timer on mount
   useEffect(() => {
     checkActiveTimer();
     fetchTotalTime();
   }, [taskId]);
 
-  // Update elapsed time every second when timer is running
   useEffect(() => {
     let interval: number | null = null;
 
@@ -83,12 +48,10 @@ const Timer: React.FC<TimerProps> = ({ taskId, onTimeUpdate }) => {
         `http://localhost:4000/time-entries/task/${taskId}/active`,
       );
       if (res.data) {
-        // Active timer exists
         setIsRunning(true);
         setStartTime(new Date(res.data.startTime));
       }
-    } catch (err) {
-      // No active timer
+    } catch {
       setIsRunning(false);
     }
   };
@@ -130,10 +93,8 @@ const Timer: React.FC<TimerProps> = ({ taskId, onTimeUpdate }) => {
       setStartTime(null);
       setElapsedSeconds(0);
 
-      // Refresh total time
       await fetchTotalTime();
 
-      // Notify parent component
       if (onTimeUpdate) {
         onTimeUpdate();
       }
@@ -156,49 +117,88 @@ const Timer: React.FC<TimerProps> = ({ taskId, onTimeUpdate }) => {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
       {/* Timer Controls */}
-      <TimerContainer>
-        <TimerIcon sx={{ color: "#00d4d4", fontSize: 20 }} />
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1.5,
+          p: 1.5,
+          borderRadius: "14px",
+          background: isRunning
+            ? "rgba(239, 68, 68, 0.04)"
+            : "rgba(8, 145, 178, 0.04)",
+          border: `1px solid ${isRunning ? "rgba(239, 68, 68, 0.12)" : "rgba(8, 145, 178, 0.1)"}`,
+          transition: "all 0.3s ease",
+        }}
+      >
+        <TimerIcon
+          sx={{
+            color: isRunning ? "#ef4444" : "#0891b2",
+            fontSize: 18,
+            ...(isRunning && { animation: `${pulse} 1.5s ease-in-out infinite` }),
+          }}
+        />
+
+        <Typography
+          variant="body2"
+          sx={{
+            fontWeight: 700,
+            color: isRunning ? "#ef4444" : "#64748b",
+            fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+            fontSize: "14px",
+            letterSpacing: "0.5px",
+            flex: 1,
+          }}
+        >
+          {isRunning ? formatTime(elapsedSeconds) : "00:00:00"}
+        </Typography>
 
         {isRunning ? (
-          <>
-            <Typography
-              variant="body2"
+          <Tooltip title="Stop Timer">
+            <IconButton
+              size="small"
+              onClick={handleStop}
+              disabled={loading}
               sx={{
-                fontWeight: 600,
-                color: "#f44336",
-                fontFamily: "monospace",
-                fontSize: "14px",
+                width: 32,
+                height: 32,
+                background: "linear-gradient(135deg, #ef4444, #dc2626)",
+                color: "white",
+                "&:hover": {
+                  background: "linear-gradient(135deg, #dc2626, #b91c1c)",
+                  transform: "scale(1.08)",
+                },
+                "&:disabled": { background: "#ccc" },
+                transition: "all 0.2s ease",
               }}
             >
-              {formatTime(elapsedSeconds)}
-            </Typography>
-            <Tooltip title="Stop Timer">
-              <StopButton size="small" onClick={handleStop} disabled={loading}>
-                <Stop fontSize="small" />
-              </StopButton>
-            </Tooltip>
-          </>
+              <Stop sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
         ) : (
-          <>
-            <Typography
-              variant="body2"
+          <Tooltip title="Start Timer">
+            <IconButton
+              size="small"
+              onClick={handleStart}
+              disabled={loading}
               sx={{
-                fontWeight: 600,
-                color: "#666",
-                fontFamily: "monospace",
-                fontSize: "14px",
+                width: 32,
+                height: 32,
+                background: "linear-gradient(135deg, #10b981, #059669)",
+                color: "white",
+                "&:hover": {
+                  background: "linear-gradient(135deg, #059669, #047857)",
+                  transform: "scale(1.08)",
+                },
+                "&:disabled": { background: "#ccc" },
+                transition: "all 0.2s ease",
               }}
             >
-              00:00:00
-            </Typography>
-            <Tooltip title="Start Timer">
-              <PlayButton size="small" onClick={handleStart} disabled={loading}>
-                <PlayArrow fontSize="small" />
-              </PlayButton>
-            </Tooltip>
-          </>
+              <PlayArrow sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
         )}
-      </TimerContainer>
+      </Box>
 
       {/* Total Time Display */}
       {totalSeconds > 0 && (
@@ -206,18 +206,18 @@ const Timer: React.FC<TimerProps> = ({ taskId, onTimeUpdate }) => {
           sx={{
             display: "flex",
             alignItems: "center",
-            gap: 1,
+            gap: 0.5,
             px: 1.5,
             py: 0.5,
-            borderRadius: "8px",
-            backgroundColor: "rgba(0, 212, 212, 0.1)",
           }}
         >
           <Typography
             variant="caption"
             sx={{
-              color: "#00a8a8",
+              color: "#0891b2",
               fontWeight: 600,
+              fontSize: "11.5px",
+              fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
             }}
           >
             Total: {formatTime(totalSeconds)}

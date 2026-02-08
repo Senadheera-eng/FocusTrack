@@ -1,64 +1,79 @@
 import React from "react";
-import { Card, CardContent, Box, Typography } from "@mui/material";
-import { styled } from "@mui/material/styles";
+import { Box, Typography } from "@mui/material";
 import type { SvgIconComponent } from "@mui/icons-material";
 
 interface StatsCardProps {
   icon: SvgIconComponent;
   value: number;
   label: string;
-  iconBgColor: string;
-  iconColor: string;
+  color: string;
+  bgColor: string;
 }
-
-const StyledStatsCard = styled(Card)(({ theme }) => ({
-  background:
-    "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 1) 100%)",
-  backdropFilter: "blur(20px)",
-  borderRadius: "16px",
-  border: "1px solid rgba(0, 212, 212, 0.1)",
-  boxShadow: "0 4px 16px rgba(0, 0, 0, 0.08)",
-  transition: "all 0.3s ease",
-  "&:hover": {
-    transform: "translateY(-4px)",
-    boxShadow: "0 8px 24px rgba(0, 212, 212, 0.2)",
-  },
-}));
 
 const StatsCard: React.FC<StatsCardProps> = ({
   icon: Icon,
   value,
   label,
-  iconBgColor,
-  iconColor,
+  color,
+  bgColor,
 }) => {
   return (
-    <StyledStatsCard>
-      <CardContent>
-        <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-          <Box
-            sx={{
-              p: 1.5,
-              borderRadius: "12px",
-              bgcolor: iconBgColor,
-              mr: 2,
-            }}
-          >
-            <Icon sx={{ color: iconColor, fontSize: 28 }} />
-          </Box>
-          <Typography variant="h4" sx={{ fontWeight: 700, color: "#2d3748" }}>
-            {value}
-          </Typography>
-        </Box>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ fontWeight: 500 }}
+    <Box
+      sx={{
+        background: "rgba(255, 255, 255, 0.7)",
+        backdropFilter: "blur(16px)",
+        borderRadius: "18px",
+        border: "1px solid rgba(255, 255, 255, 0.8)",
+        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.04)",
+        p: { xs: 2.5, md: 3 },
+        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        cursor: "default",
+        "&:hover": {
+          transform: "translateY(-4px)",
+          boxShadow: "0 12px 28px rgba(0, 0, 0, 0.08)",
+          background: "rgba(255, 255, 255, 0.85)",
+        },
+      }}
+    >
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+        <Box
+          sx={{
+            width: 48,
+            height: 48,
+            borderRadius: "14px",
+            background: bgColor,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
         >
-          {label}
-        </Typography>
-      </CardContent>
-    </StyledStatsCard>
+          <Icon sx={{ color, fontSize: 24 }} />
+        </Box>
+      </Box>
+      <Typography
+        variant="h3"
+        sx={{
+          fontWeight: 800,
+          color: "#0f172a",
+          fontSize: { xs: "1.8rem", md: "2.2rem" },
+          letterSpacing: "-0.5px",
+          lineHeight: 1,
+          mb: 0.5,
+        }}
+      >
+        {value}
+      </Typography>
+      <Typography
+        variant="body2"
+        sx={{
+          color: "#64748b",
+          fontWeight: 500,
+          fontSize: "13px",
+        }}
+      >
+        {label}
+      </Typography>
+    </Box>
   );
 };
 

@@ -7,10 +7,10 @@ interface DashboardHeaderProps {
   onLogout: () => void;
 }
 
-const StyledAppBar = styled(AppBar)(({ theme }) => ({
+const StyledAppBar = styled(AppBar)({
   background: "linear-gradient(135deg, #00d4d4 0%, #00a8a8 100%)",
   boxShadow: "0 4px 20px rgba(0, 212, 212, 0.3)",
-}));
+});
 
 const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) => {
   return (

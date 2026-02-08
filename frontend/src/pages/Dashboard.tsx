@@ -1,18 +1,27 @@
 import React, { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
-import { Box, Container, Typography, Button, Alert } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Button,
+  Alert,
+  IconButton,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
 import {
   Add as AddIcon,
   Assignment,
   CheckCircle,
   TrendingUp,
   AccessTime,
+  Menu as MenuIcon,
 } from "@mui/icons-material";
-import { styled } from "@mui/material/styles";
+import { styled, keyframes } from "@mui/material/styles";
 
 // Import components
-import DashboardHeader from "../components/DashboardHeader";
+import Sidebar, { SIDEBAR_WIDTH } from "../components/Sidebar";
 import StatsCard from "../components/StatsCard";
 import TaskCard from "../components/TaskCard";
 import EmptyState from "../components/EmptyState";
@@ -30,31 +39,97 @@ interface Task {
   completedAt?: string;
 }
 
+// ======================== ANIMATIONS ========================
+
+const fadeInUp = keyframes`
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+// ======================== STYLED COMPONENTS ========================
+
 const AddTaskButton = styled(Button)({
-  background: "linear-gradient(135deg, #00d4d4 0%, #00a8a8 100%)",
-  borderRadius: "12px",
-  padding: "12px 32px",
+  background: "linear-gradient(135deg, #00d4d4 0%, #0891b2 100%)",
+  borderRadius: "14px",
+  padding: "12px 28px",
   textTransform: "none",
-  fontWeight: 600,
-  boxShadow: "0 4px 14px rgba(0, 212, 212, 0.4)",
-  transition: "all 0.3s ease",
+  fontWeight: 700,
+  fontSize: "14px",
+  letterSpacing: "0.3px",
+  boxShadow: "0 4px 14px rgba(0, 212, 212, 0.3)",
+  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
   "&:hover": {
-    background: "linear-gradient(135deg, #00a8a8 0%, #008888 100%)",
+    background: "linear-gradient(135deg, #0891b2 0%, #0e7490 100%)",
     transform: "translateY(-2px)",
-    boxShadow: "0 6px 20px rgba(0, 212, 212, 0.5)",
+    boxShadow: "0 6px 20px rgba(0, 212, 212, 0.4)",
   },
 });
 
+const FilterChip = styled(Box, {
+  shouldForwardProp: (prop) => prop !== "selected",
+})<{ selected?: boolean }>(({ selected }) => ({
+  padding: "8px 20px",
+  borderRadius: "50px",
+  fontSize: "13px",
+  fontWeight: 600,
+  cursor: "pointer",
+  transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+  whiteSpace: "nowrap" as const,
+  ...(selected
+    ? {
+        background: "linear-gradient(135deg, #00d4d4 0%, #0891b2 100%)",
+        color: "white",
+        boxShadow: "0 4px 14px rgba(0, 212, 212, 0.3)",
+      }
+    : {
+        background: "rgba(0, 0, 0, 0.04)",
+        color: "#64748b",
+        "&:hover": {
+          background: "rgba(0, 212, 212, 0.08)",
+          color: "#0891b2",
+        },
+      }),
+}));
+
+// ======================== HELPERS ========================
+
+const getEmailFromToken = (): string => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) return "";
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.email || payload.sub || "";
+  } catch {
+    return "";
+  }
+};
+
+const getGreeting = (): string => {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+};
+
+// ======================== COMPONENT ========================
+
 const Dashboard: React.FC = () => {
   const { state, logout } = useAuth();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<"all" | "todo" | "in_progress" | "done">("all");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Modal states
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
+
+  const userEmail = getEmailFromToken();
 
   useEffect(() => {
     fetchTasks();
@@ -85,7 +160,7 @@ const Dashboard: React.FC = () => {
             : t,
         ),
       );
-    } catch (err) {
+    } catch {
       alert("Failed to update task");
     }
   };
@@ -96,7 +171,7 @@ const Dashboard: React.FC = () => {
     try {
       await axios.delete(`http://localhost:4000/tasks/${id}`);
       setTasks(tasks.filter((t) => t.id !== id));
-    } catch (err) {
+    } catch {
       alert("Failed to delete task");
     }
   };
@@ -118,6 +193,10 @@ const Dashboard: React.FC = () => {
     todo: tasks.filter((t) => t.status === "todo").length,
   };
 
+  // Filtered tasks
+  const filteredTasks =
+    filter === "all" ? tasks : tasks.filter((t) => t.status === filter);
+
   if (!state.isAuthenticated) {
     return (
       <Box
@@ -136,139 +215,278 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#f5f7fa" }}>
-      {/* Header */}
-      <DashboardHeader onLogout={logout} />
+    <Box sx={{ display: "flex", minHeight: "100vh", background: "#f8fafc" }}>
+      {/* Sidebar */}
+      <Sidebar
+        userEmail={userEmail}
+        onLogout={logout}
+        mobileOpen={mobileMenuOpen}
+        onMobileClose={() => setMobileMenuOpen(false)}
+      />
 
-      <Container maxWidth="lg" sx={{ py: 5 }}>
-        {/* Page Title */}
-        <Box sx={{ mb: 5 }}>
-          <Typography
-            variant="h3"
+      {/* Main Content */}
+      <Box
+        sx={{
+          flex: 1,
+          ml: { xs: 0, md: `${SIDEBAR_WIDTH}px` },
+          minHeight: "100vh",
+          transition: "margin 0.3s ease",
+        }}
+      >
+        {/* Top Bar (Mobile) */}
+        {isMobile && (
+          <Box
             sx={{
-              fontWeight: 700,
-              color: "#2d3748",
-              mb: 1,
-              background: "linear-gradient(135deg, #00d4d4 0%, #00a8a8 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
+              display: "flex",
+              alignItems: "center",
+              px: 2,
+              py: 1.5,
+              background: "rgba(255, 255, 255, 0.8)",
+              backdropFilter: "blur(12px)",
+              borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
+              position: "sticky",
+              top: 0,
+              zIndex: 100,
             }}
           >
-            Your Dashboard
-          </Typography>
-          <Typography
-            variant="body1"
-            color="text.secondary"
-            sx={{ fontSize: "16px" }}
-          >
-            Manage your tasks and track your productivity journey
-          </Typography>
-        </Box>
-
-        {/* Stats Cards */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "1fr",
-              sm: "repeat(2, 1fr)",
-              md: "repeat(4, 1fr)",
-            },
-            gap: 3,
-            mb: 5,
-          }}
-        >
-          <StatsCard
-            icon={Assignment}
-            value={stats.total}
-            label="Total Tasks"
-            iconBgColor="linear-gradient(135deg, #00d4d4 0%, #00a8a8 100%)"
-            iconColor="white"
-          />
-          <StatsCard
-            icon={CheckCircle}
-            value={stats.completed}
-            label="Completed"
-            iconBgColor="rgba(76, 175, 80, 0.15)"
-            iconColor="#4caf50"
-          />
-          <StatsCard
-            icon={TrendingUp}
-            value={stats.inProgress}
-            label="In Progress"
-            iconBgColor="rgba(255, 152, 0, 0.15)"
-            iconColor="#ff9800"
-          />
-          <StatsCard
-            icon={AccessTime}
-            value={stats.todo}
-            label="To Do"
-            iconBgColor="rgba(158, 158, 158, 0.15)"
-            iconColor="#9e9e9e"
-          />
-        </Box>
-
-        {/* Tasks Header */}
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 4,
-          }}
-        >
-          <Typography variant="h5" sx={{ fontWeight: 600, color: "#2d3748" }}>
-            Your Tasks
-          </Typography>
-          <AddTaskButton
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleAddTask}
-          >
-            Add New Task
-          </AddTaskButton>
-        </Box>
-
-        {/* Error Alert */}
-        {error && (
-          <Alert
-            severity="error"
-            sx={{ borderRadius: "12px", mb: 3 }}
-            onClose={() => setError(null)}
-          >
-            {error}
-          </Alert>
+            <IconButton
+              onClick={() => setMobileMenuOpen(true)}
+              sx={{ mr: 1, color: "#0891b2" }}
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography
+              sx={{
+                fontWeight: 800,
+                fontSize: "18px",
+                background: "linear-gradient(135deg, #00d4d4, #0891b2)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              FocusTrack
+            </Typography>
+          </Box>
         )}
 
-        {/* Content States */}
-        {loading ? (
-          <LoadingState />
-        ) : tasks.length === 0 ? (
-          <EmptyState onAddTask={handleAddTask} />
-        ) : (
+        {/* Content Area */}
+        <Box sx={{ p: { xs: 2.5, sm: 3, md: 4, lg: 5 }, maxWidth: "1400px" }}>
+          {/* Greeting */}
+          <Box
+            sx={{
+              mb: 4,
+              animation: `${fadeInUp} 0.5s ease-out`,
+            }}
+          >
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 800,
+                color: "#0f172a",
+                mb: 0.5,
+                fontSize: { xs: "1.5rem", md: "2rem" },
+                letterSpacing: "-0.5px",
+              }}
+            >
+              {getGreeting()},{" "}
+              <Box
+                component="span"
+                sx={{
+                  background: "linear-gradient(135deg, #00d4d4, #0891b2)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
+              >
+                {userEmail ? userEmail.split("@")[0] : "User"}
+              </Box>
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{ color: "#64748b", fontSize: "15px" }}
+            >
+              Here's what's happening with your tasks today
+            </Typography>
+          </Box>
+
+          {/* Stats Cards */}
           <Box
             sx={{
               display: "grid",
               gridTemplateColumns: {
-                xs: "1fr",
-                md: "repeat(2, 1fr)",
-                lg: "repeat(3, 1fr)",
+                xs: "repeat(2, 1fr)",
+                sm: "repeat(2, 1fr)",
+                md: "repeat(4, 1fr)",
               },
-              gap: 3,
+              gap: { xs: 2, md: 3 },
+              mb: 4,
+              animation: `${fadeInUp} 0.5s ease-out`,
+              animationDelay: "0.1s",
+              animationFillMode: "both",
             }}
           >
-            {tasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                onMarkComplete={handleMarkComplete}
-                onDelete={handleDelete}
-                onEdit={handleEdit}
-              />
-            ))}
+            <StatsCard
+              icon={Assignment}
+              value={stats.total}
+              label="Total Tasks"
+              color="#0891b2"
+              bgColor="rgba(8, 145, 178, 0.1)"
+            />
+            <StatsCard
+              icon={CheckCircle}
+              value={stats.completed}
+              label="Completed"
+              color="#10b981"
+              bgColor="rgba(16, 185, 129, 0.1)"
+            />
+            <StatsCard
+              icon={TrendingUp}
+              value={stats.inProgress}
+              label="In Progress"
+              color="#f59e0b"
+              bgColor="rgba(245, 158, 11, 0.1)"
+            />
+            <StatsCard
+              icon={AccessTime}
+              value={stats.todo}
+              label="To Do"
+              color="#8b5cf6"
+              bgColor="rgba(139, 92, 246, 0.1)"
+            />
           </Box>
-        )}
-      </Container>
+
+          {/* Tasks Header + Filters */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              justifyContent: "space-between",
+              alignItems: { xs: "stretch", sm: "center" },
+              gap: 2,
+              mb: 3,
+              animation: `${fadeInUp} 0.5s ease-out`,
+              animationDelay: "0.2s",
+              animationFillMode: "both",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 700, color: "#0f172a", mr: 1 }}
+              >
+                Tasks
+              </Typography>
+              <FilterChip
+                selected={filter === "all"}
+                onClick={() => setFilter("all")}
+              >
+                All ({stats.total})
+              </FilterChip>
+              <FilterChip
+                selected={filter === "todo"}
+                onClick={() => setFilter("todo")}
+              >
+                To Do ({stats.todo})
+              </FilterChip>
+              <FilterChip
+                selected={filter === "in_progress"}
+                onClick={() => setFilter("in_progress")}
+              >
+                In Progress ({stats.inProgress})
+              </FilterChip>
+              <FilterChip
+                selected={filter === "done"}
+                onClick={() => setFilter("done")}
+              >
+                Done ({stats.completed})
+              </FilterChip>
+            </Box>
+            <AddTaskButton
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleAddTask}
+            >
+              Add Task
+            </AddTaskButton>
+          </Box>
+
+          {/* Error Alert */}
+          {error && (
+            <Alert
+              severity="error"
+              sx={{
+                borderRadius: "14px",
+                mb: 3,
+                backdropFilter: "blur(8px)",
+                background: "rgba(239, 68, 68, 0.06)",
+                border: "1px solid rgba(239, 68, 68, 0.15)",
+              }}
+              onClose={() => setError(null)}
+            >
+              {error}
+            </Alert>
+          )}
+
+          {/* Content States */}
+          {loading ? (
+            <LoadingState />
+          ) : filteredTasks.length === 0 ? (
+            filter === "all" ? (
+              <EmptyState onAddTask={handleAddTask} />
+            ) : (
+              <Box
+                sx={{
+                  textAlign: "center",
+                  py: 8,
+                  animation: `${fadeInUp} 0.4s ease-out`,
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{ color: "#94a3b8", fontWeight: 600 }}
+                >
+                  No tasks in this category
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{ color: "#cbd5e1", mt: 1 }}
+                >
+                  Try selecting a different filter
+                </Typography>
+              </Box>
+            )
+          ) : (
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm: "repeat(2, 1fr)",
+                  lg: "repeat(3, 1fr)",
+                },
+                gap: { xs: 2, md: 3 },
+              }}
+            >
+              {filteredTasks.map((task, index) => (
+                <Box
+                  key={task.id}
+                  sx={{
+                    animation: `${fadeInUp} 0.4s ease-out`,
+                    animationDelay: `${index * 0.05}s`,
+                    animationFillMode: "both",
+                  }}
+                >
+                  <TaskCard
+                    task={task}
+                    onMarkComplete={handleMarkComplete}
+                    onDelete={handleDelete}
+                    onEdit={handleEdit}
+                  />
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Box>
+      </Box>
 
       {/* Modals */}
       <AddTaskModal

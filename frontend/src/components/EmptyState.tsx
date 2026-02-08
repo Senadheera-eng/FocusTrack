@@ -1,63 +1,83 @@
 import React from "react";
-import { Card, CardContent, Typography, Button, Fade } from "@mui/material";
+import { Box, Typography, Button } from "@mui/material";
 import { Add as AddIcon, Assignment } from "@mui/icons-material";
-import { styled } from "@mui/material/styles";
+import { keyframes } from "@mui/material/styles";
 
 interface EmptyStateProps {
   onAddTask: () => void;
 }
 
-const AddTaskButton = styled(Button)({
-  background: "linear-gradient(135deg, #00d4d4 0%, #00a8a8 100%)",
-  borderRadius: "12px",
-  padding: "12px 32px",
-  textTransform: "none",
-  fontWeight: 600,
-  boxShadow: "0 4px 14px rgba(0, 212, 212, 0.4)",
-  transition: "all 0.3s ease",
-  "&:hover": {
-    background: "linear-gradient(135deg, #00a8a8 0%, #008888 100%)",
-    transform: "translateY(-2px)",
-    boxShadow: "0 6px 20px rgba(0, 212, 212, 0.5)",
-  },
-});
+const floatGentle = keyframes`
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+`;
 
 const EmptyState: React.FC<EmptyStateProps> = ({ onAddTask }) => {
   return (
-    <Fade in>
-      <Card
+    <Box
+      sx={{
+        textAlign: "center",
+        py: { xs: 6, md: 10 },
+        px: 3,
+        borderRadius: "24px",
+        border: "2px dashed rgba(8, 145, 178, 0.15)",
+        background:
+          "linear-gradient(135deg, rgba(8, 145, 178, 0.02) 0%, rgba(0, 212, 212, 0.04) 100%)",
+      }}
+    >
+      <Box
         sx={{
-          borderRadius: "16px",
-          textAlign: "center",
-          py: 8,
-          border: "2px dashed rgba(0, 212, 212, 0.3)",
-          background:
-            "linear-gradient(135deg, rgba(0, 212, 212, 0.02) 0%, rgba(0, 212, 212, 0.05) 100%)",
+          width: 80,
+          height: 80,
+          borderRadius: "22px",
+          background: "rgba(8, 145, 178, 0.08)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          mx: "auto",
+          mb: 3,
+          animation: `${floatGentle} 3s ease-in-out infinite`,
         }}
       >
-        <CardContent>
-          <Assignment
-            sx={{ fontSize: 80, color: "rgba(0, 212, 212, 0.3)", mb: 2 }}
-          />
-          <Typography
-            variant="h6"
-            sx={{ mb: 1, fontWeight: 600, color: "#2d3748" }}
-          >
-            No tasks yet
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Create your first task to get started on your productivity journey
-          </Typography>
-          <AddTaskButton
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={onAddTask}
-          >
-            Create Task
-          </AddTaskButton>
-        </CardContent>
-      </Card>
-    </Fade>
+        <Assignment sx={{ fontSize: 36, color: "#0891b2", opacity: 0.6 }} />
+      </Box>
+
+      <Typography
+        variant="h6"
+        sx={{ mb: 1, fontWeight: 700, color: "#0f172a", fontSize: "18px" }}
+      >
+        No tasks yet
+      </Typography>
+      <Typography
+        variant="body2"
+        sx={{ color: "#64748b", mb: 4, fontSize: "14px", maxWidth: 320, mx: "auto" }}
+      >
+        Create your first task to get started on your productivity journey
+      </Typography>
+
+      <Button
+        variant="contained"
+        startIcon={<AddIcon />}
+        onClick={onAddTask}
+        sx={{
+          background: "linear-gradient(135deg, #00d4d4 0%, #0891b2 100%)",
+          borderRadius: "14px",
+          padding: "12px 28px",
+          textTransform: "none",
+          fontWeight: 700,
+          fontSize: "14px",
+          boxShadow: "0 4px 14px rgba(0, 212, 212, 0.3)",
+          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          "&:hover": {
+            background: "linear-gradient(135deg, #0891b2 0%, #0e7490 100%)",
+            transform: "translateY(-2px)",
+            boxShadow: "0 6px 20px rgba(0, 212, 212, 0.4)",
+          },
+        }}
+      >
+        Create Task
+      </Button>
+    </Box>
   );
 };
 
