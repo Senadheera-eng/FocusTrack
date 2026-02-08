@@ -30,8 +30,8 @@ export class TimeEntriesService {
     // Check if there's already an active timer for this task
     const activeTimer = await this.timeEntriesRepository.findOne({
       where: { 
-        task: { id: taskId }, 
-        user: { id: user.id },
+        taskId: taskId,
+        userId: user.id,
         endTime: IsNull() 
       },
     });
@@ -40,10 +40,10 @@ export class TimeEntriesService {
       throw new BadRequestException('Timer is already running for this task');
     }
 
-    // Create new time entry
+    // Create new time entry using IDs
     const timeEntry = this.timeEntriesRepository.create({
-      task,
-      user,
+      taskId: taskId,
+      userId: user.id,
       startTime: new Date(),
       endTime: null,
       duration: 0,
@@ -56,14 +56,13 @@ export class TimeEntriesService {
    * Stop the active timer for a task
    */
   async stopTimer(taskId: string, user: User): Promise<TimeEntry> {
-    // Find active timer
+    // Find active timer using IDs
     const activeTimer = await this.timeEntriesRepository.findOne({
       where: { 
-        task: { id: taskId }, 
-        user: { id: user.id },
+        taskId: taskId,
+        userId: user.id,
         endTime: IsNull() 
       },
-      relations: ['task'],
     });
 
     if (!activeTimer) {
@@ -96,7 +95,7 @@ export class TimeEntriesService {
     }
 
     return this.timeEntriesRepository.find({
-      where: { task: { id: taskId }, user: { id: user.id } },
+      where: { taskId: taskId, userId: user.id },
       order: { startTime: 'DESC' },
     });
   }
@@ -107,11 +106,10 @@ export class TimeEntriesService {
   async getActiveTimer(taskId: string, user: User): Promise<TimeEntry | null> {
     return this.timeEntriesRepository.findOne({
       where: { 
-        task: { id: taskId }, 
-        user: { id: user.id },
+        taskId: taskId,
+        userId: user.id,
         endTime: IsNull() 
       },
-      relations: ['task'],
     });
   }
 
@@ -129,10 +127,9 @@ export class TimeEntriesService {
   async getUserActiveTimers(user: User): Promise<TimeEntry[]> {
     return this.timeEntriesRepository.find({
       where: { 
-        user: { id: user.id },
+        userId: user.id,
         endTime: IsNull() 
       },
-      relations: ['task'],
       order: { startTime: 'DESC' },
     });
   }

@@ -2,22 +2,19 @@ import {
   Entity, 
   PrimaryGeneratedColumn, 
   Column, 
-  ManyToOne, 
-  CreateDateColumn 
+  CreateDateColumn
 } from 'typeorm';
-import { Task } from '../../tasks/entities/task.entity';
-import { User } from '../../users/entities/user.entity';
 
 @Entity('time_entries')
 export class TimeEntry {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Task, { onDelete: 'CASCADE' })
-  task: Task;
+  @Column({ type: 'uuid' })
+  taskId: string;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  user: User;
+  @Column({ type: 'uuid' })
+  userId: string;
 
   @Column({ type: 'timestamp' })
   startTime: Date;
@@ -26,7 +23,7 @@ export class TimeEntry {
   endTime: Date | null;
 
   @Column({ type: 'int', default: 0 })
-  duration: number; // Duration in seconds
+  duration: number;
 
   @CreateDateColumn()
   createdAt: Date;
