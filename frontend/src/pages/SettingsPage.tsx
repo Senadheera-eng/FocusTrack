@@ -1,13 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
+import axios from "axios";
 import {
   Box,
   Typography,
   IconButton,
   Switch,
   Avatar,
+  Button,
+  TextField,
   useMediaQuery,
   useTheme,
+  CircularProgress,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -15,6 +19,8 @@ import {
   Notifications,
   Palette,
   Info,
+  CameraAlt,
+  Check as CheckIcon,
 } from "@mui/icons-material";
 import { keyframes } from "@mui/material/styles";
 
@@ -50,15 +56,97 @@ const SettingsPage: React.FC = () => {
   const { logout } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dueDateReminders, setDueDateReminders] = useState(true);
   const [overdueAlerts, setOverdueAlerts] = useState(true);
-  const [compactView, setCompactView] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+
+  // Profile state
+  const [username, setUsername] = useState("");
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [editingUsername, setEditingUsername] = useState(false);
+  const [usernameInput, setUsernameInput] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
 
   const userEmail = getEmailFromToken();
-  const userName = userEmail ? userEmail.split("@")[0] : "User";
-  const initials = userName.slice(0, 2).toUpperCase();
+  const displayName = username || (userEmail ? userEmail.split("@")[0] : "User");
+  const initials = displayName.slice(0, 2).toUpperCase();
+
+  // Fetch profile on mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await axios.get("http://localhost:4000/auth/me");
+        if (res.data.username) setUsername(res.data.username);
+        if (res.data.profilePicture) setProfilePicture(res.data.profilePicture);
+      } catch {
+        // silent
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  const handleProfilePictureClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type and size (max 2MB)
+    if (!file.type.startsWith("image/")) return;
+    if (file.size > 2 * 1024 * 1024) {
+      setSaveMessage("Image must be under 2MB");
+      setTimeout(() => setSaveMessage(""), 3000);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result as string;
+      setProfilePicture(base64);
+      try {
+        await axios.patch("http://localhost:4000/auth/profile", { profilePicture: base64 });
+        setSaveMessage("Profile picture updated");
+        setTimeout(() => setSaveMessage(""), 3000);
+      } catch {
+        setSaveMessage("Failed to save picture");
+        setTimeout(() => setSaveMessage(""), 3000);
+      }
+    };
+    reader.readAsDataURL(file);
+
+    // Reset file input
+    e.target.value = "";
+  };
+
+  const handleSaveUsername = async () => {
+    if (!usernameInput.trim()) return;
+    setSaving(true);
+    try {
+      const res = await axios.patch("http://localhost:4000/auth/profile", {
+        username: usernameInput.trim(),
+      });
+      setUsername(res.data.username || usernameInput.trim());
+      setEditingUsername(false);
+      setSaveMessage("Username updated");
+      setTimeout(() => setSaveMessage(""), 3000);
+    } catch {
+      setSaveMessage("Failed to save username");
+      setTimeout(() => setSaveMessage(""), 3000);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleStartEditUsername = () => {
+    setUsernameInput(username || (userEmail ? userEmail.split("@")[0] : ""));
+    setEditingUsername(true);
+  };
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", background: "#f8fafc" }}>
@@ -132,6 +220,33 @@ const SettingsPage: React.FC = () => {
             </Typography>
           </Box>
 
+          {/* Success / Error Message */}
+          {saveMessage && (
+            <Box
+              sx={{
+                mb: 2,
+                px: 2.5,
+                py: 1.5,
+                borderRadius: "12px",
+                background: saveMessage.includes("Failed")
+                  ? "rgba(239, 68, 68, 0.08)"
+                  : "rgba(16, 185, 129, 0.08)",
+                border: `1px solid ${saveMessage.includes("Failed") ? "rgba(239, 68, 68, 0.2)" : "rgba(16, 185, 129, 0.2)"}`,
+                animation: `${fadeInUp} 0.3s ease-out`,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  color: saveMessage.includes("Failed") ? "#ef4444" : "#10b981",
+                }}
+              >
+                {saveMessage}
+              </Typography>
+            </Box>
+          )}
+
           {/* Profile Card */}
           <Box
             sx={{
@@ -147,26 +262,158 @@ const SettingsPage: React.FC = () => {
                 Profile
               </Typography>
             </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2.5 }}>
-              <Avatar
+
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2.5, mb: 3 }}>
+              {/* Avatar with upload overlay */}
+              <Box
+                onClick={handleProfilePictureClick}
                 sx={{
-                  width: 56,
-                  height: 56,
-                  background: "linear-gradient(135deg, #00d4d4, #0891b2)",
-                  fontSize: "20px",
-                  fontWeight: 700,
+                  position: "relative",
+                  cursor: "pointer",
+                  "&:hover .avatar-overlay": { opacity: 1 },
                 }}
               >
-                {initials}
-              </Avatar>
-              <Box>
+                <Avatar
+                  src={profilePicture || undefined}
+                  sx={{
+                    width: 64,
+                    height: 64,
+                    background: "linear-gradient(135deg, #00d4d4, #0891b2)",
+                    fontSize: "22px",
+                    fontWeight: 700,
+                  }}
+                >
+                  {!profilePicture && initials}
+                </Avatar>
+                <Box
+                  className="avatar-overlay"
+                  sx={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    borderRadius: "50%",
+                    background: "rgba(0, 0, 0, 0.45)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    opacity: 0,
+                    transition: "opacity 0.2s ease",
+                  }}
+                >
+                  <CameraAlt sx={{ color: "white", fontSize: 22 }} />
+                </Box>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  style={{ display: "none" }}
+                />
+              </Box>
+
+              <Box sx={{ flex: 1 }}>
                 <Typography sx={{ fontWeight: 700, color: "#0f172a", fontSize: "16px" }}>
-                  {userName}
+                  {displayName}
                 </Typography>
                 <Typography sx={{ color: "#64748b", fontSize: "13px" }}>
                   {userEmail}
                 </Typography>
+                <Typography
+                  sx={{
+                    color: "#94a3b8",
+                    fontSize: "11px",
+                    mt: 0.5,
+                  }}
+                >
+                  Click avatar to change photo
+                </Typography>
               </Box>
+            </Box>
+
+            {/* Username edit */}
+            <Box
+              sx={{
+                pt: 2,
+                borderTop: "1px solid rgba(0, 0, 0, 0.06)",
+              }}
+            >
+              <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#64748b", mb: 1 }}>
+                Display Name
+              </Typography>
+              {editingUsername ? (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <TextField
+                    size="small"
+                    value={usernameInput}
+                    onChange={(e) => setUsernameInput(e.target.value)}
+                    placeholder="Enter username"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSaveUsername();
+                      if (e.key === "Escape") setEditingUsername(false);
+                    }}
+                    sx={{
+                      flex: 1,
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: "10px",
+                        fontSize: "14px",
+                      },
+                    }}
+                  />
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={handleSaveUsername}
+                    disabled={saving || !usernameInput.trim()}
+                    startIcon={saving ? <CircularProgress size={14} color="inherit" /> : <CheckIcon />}
+                    sx={{
+                      borderRadius: "10px",
+                      textTransform: "none",
+                      fontWeight: 600,
+                      background: "linear-gradient(135deg, #00d4d4, #0891b2)",
+                      px: 2,
+                      "&:hover": {
+                        background: "linear-gradient(135deg, #0891b2, #0e7490)",
+                      },
+                    }}
+                  >
+                    Save
+                  </Button>
+                  <Button
+                    size="small"
+                    onClick={() => setEditingUsername(false)}
+                    sx={{
+                      borderRadius: "10px",
+                      textTransform: "none",
+                      fontWeight: 600,
+                      color: "#64748b",
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </Box>
+              ) : (
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <Typography sx={{ fontSize: "14px", color: "#0f172a", fontWeight: 500 }}>
+                    {displayName}
+                  </Typography>
+                  <Button
+                    size="small"
+                    onClick={handleStartEditUsername}
+                    sx={{
+                      borderRadius: "10px",
+                      textTransform: "none",
+                      fontWeight: 600,
+                      fontSize: "12px",
+                      color: "#0891b2",
+                    }}
+                  >
+                    Change
+                  </Button>
+                </Box>
+              )}
             </Box>
           </Box>
 
@@ -271,15 +518,15 @@ const SettingsPage: React.FC = () => {
             >
               <Box>
                 <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#0f172a" }}>
-                  Compact View
+                  Dark Mode
                 </Typography>
                 <Typography sx={{ fontSize: "12px", color: "#94a3b8" }}>
-                  Reduce spacing in task cards
+                  Switch to a darker color theme
                 </Typography>
               </Box>
               <Switch
-                checked={compactView}
-                onChange={(e) => setCompactView(e.target.checked)}
+                checked={darkMode}
+                onChange={(e) => setDarkMode(e.target.checked)}
                 sx={{
                   "& .MuiSwitch-switchBase.Mui-checked": { color: "#0891b2" },
                   "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {

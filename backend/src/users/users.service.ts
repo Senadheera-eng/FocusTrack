@@ -18,4 +18,13 @@ export class UsersService {
     const user = this.usersRepository.create({ email, password: hashedPassword });
     return this.usersRepository.save(user);
   }
+
+  async findById(id: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { id } });
+  }
+
+  async updateProfile(id: string, data: { username?: string; profilePicture?: string }): Promise<User> {
+    await this.usersRepository.update(id, data);
+    return this.usersRepository.findOneOrFail({ where: { id } });
+  }
 }
