@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
   Box,
@@ -13,101 +13,69 @@ import {
   Alert,
   Collapse,
   CircularProgress,
-  Fade,
-  Zoom,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   Visibility,
   VisibilityOff,
   CheckCircle,
-  Person,
+  Google,
+  GitHub,
+  Apple,
 } from "@mui/icons-material";
-import { styled } from "@mui/material/styles";
+import { styled, keyframes } from "@mui/material/styles";
 
-// Import the image - you'll need to place focustrack.jpg in your src/assets folder
 import focusTrackImage from "../assets/focustrack.jpg";
 
 interface AuthFormProps {
   isLogin: boolean;
 }
 
-// Styled components
-const Container = styled(Box)({
-  minHeight: "100vh",
-  display: "flex",
-  background: "linear-gradient(135deg, #f5f7fa 0%, #e3e8f0 100%)",
-  position: "relative",
-  overflow: "hidden",
-});
+// --------------- Keyframe Animations ---------------
+const fadeInUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
 
-const LeftPanel = styled(Box)(({ theme }) => ({
-  flex: "0 0 50%",
-  background: "linear-gradient(135deg, #00d4d4 0%, #00a8a8 100%)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  position: "relative",
-  clipPath: "polygon(0 0, 85% 0, 100% 100%, 0 100%)",
-  [theme.breakpoints.down("md")]: {
-    display: "none",
-  },
-  "&::before": {
-    content: '""',
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background:
-      "radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)",
-  },
-}));
+const pulse = keyframes`
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(0, 212, 212, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 12px rgba(0, 212, 212, 0);
+  }
+`;
 
-const ImageContainer = styled(Box)({
-  position: "relative",
-  zIndex: 1,
-  maxWidth: "500px",
-  width: "80%",
-  textAlign: "center",
-  "& img": {
-    width: "100%",
-    height: "auto",
-    borderRadius: "20px",
-    boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
-    marginBottom: "32px",
-  },
-});
+const float = keyframes`
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+`;
 
-const RightPanel = styled(Box)(({ theme }) => ({
-  flex: 1,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: theme.spacing(4),
-  [theme.breakpoints.down("sm")]: {
-    padding: theme.spacing(2),
-  },
-}));
-
-const FormContainer = styled(Box)(({ theme }) => ({
-  width: "100%",
-  maxWidth: "450px",
-  padding: theme.spacing(5, 4),
-  [theme.breakpoints.down("sm")]: {
-    padding: theme.spacing(3, 2),
-  },
-}));
-
+// --------------- Styled Components ---------------
 const StyledTextField = styled(TextField)({
   "& .MuiOutlinedInput-root": {
-    borderRadius: "8px",
-    backgroundColor: "#fff",
-    transition: "all 0.3s ease",
+    borderRadius: "12px",
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    backdropFilter: "blur(10px)",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
     "&:hover": {
-      backgroundColor: "#fafafa",
+      backgroundColor: "rgba(255, 255, 255, 0.95)",
+      boxShadow: "0 4px 20px rgba(0, 212, 212, 0.08)",
     },
     "&.Mui-focused": {
       backgroundColor: "#fff",
+      boxShadow: "0 4px 20px rgba(0, 212, 212, 0.15)",
       "& fieldset": {
         borderColor: "#00d4d4",
         borderWidth: "2px",
@@ -115,30 +83,78 @@ const StyledTextField = styled(TextField)({
     },
   },
   "& .MuiInputLabel-root.Mui-focused": {
-    color: "#00d4d4",
+    color: "#00b8b8",
   },
 });
 
-const StyledButton = styled(Button)({
-  borderRadius: "8px",
+const SubmitButton = styled(Button)({
+  borderRadius: "12px",
   padding: "14px 32px",
-  fontSize: "16px",
-  fontWeight: 600,
+  fontSize: "15px",
+  fontWeight: 700,
   textTransform: "none",
-  background: "linear-gradient(135deg, #00d4d4 0%, #00a8a8 100%)",
-  boxShadow: "0 4px 14px rgba(0, 212, 212, 0.4)",
-  transition: "all 0.3s ease",
+  letterSpacing: "0.5px",
+  background: "linear-gradient(135deg, #00d4d4 0%, #00a8a8 50%, #008888 100%)",
+  backgroundSize: "200% 200%",
+  boxShadow: "0 4px 20px rgba(0, 212, 212, 0.35)",
+  transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
   "&:hover": {
-    background: "linear-gradient(135deg, #00a8a8 0%, #008888 100%)",
+    backgroundPosition: "100% 100%",
     transform: "translateY(-2px)",
-    boxShadow: "0 6px 20px rgba(0, 212, 212, 0.5)",
+    boxShadow: "0 8px 30px rgba(0, 212, 212, 0.45)",
+  },
+  "&:active": {
+    transform: "translateY(0px)",
   },
   "&:disabled": {
-    background: "#ccc",
+    background: "linear-gradient(135deg, #b0b0b0, #999)",
+    boxShadow: "none",
   },
 });
 
-const AuthForm: React.FC<AuthFormProps> = ({ isLogin }) => {
+const SocialButton = styled(IconButton)({
+  width: "48px",
+  height: "48px",
+  border: "1.5px solid rgba(0, 0, 0, 0.08)",
+  borderRadius: "14px",
+  backgroundColor: "rgba(255, 255, 255, 0.7)",
+  backdropFilter: "blur(8px)",
+  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+  "&:hover": {
+    backgroundColor: "#fff",
+    borderColor: "#00d4d4",
+    transform: "translateY(-3px)",
+    boxShadow: "0 6px 20px rgba(0, 212, 212, 0.15)",
+  },
+});
+
+const OverlayToggleButton = styled(Button)({
+  color: "white",
+  borderColor: "rgba(255, 255, 255, 0.7)",
+  borderWidth: "2px",
+  borderRadius: "50px",
+  padding: "12px 48px",
+  fontSize: "14px",
+  fontWeight: 700,
+  textTransform: "uppercase",
+  letterSpacing: "2px",
+  backdropFilter: "blur(4px)",
+  backgroundColor: "rgba(255, 255, 255, 0.08)",
+  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+  "&:hover": {
+    borderColor: "white",
+    borderWidth: "2px",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    transform: "translateY(-2px) scale(1.02)",
+    boxShadow: "0 8px 30px rgba(0, 0, 0, 0.15)",
+  },
+});
+
+// --------------- Component ---------------
+const AuthForm: React.FC<AuthFormProps> = ({ isLogin: initialIsLogin }) => {
+  const [isSignUp, setIsSignUp] = useState(!initialIsLogin);
+
+  // Form state (shared between both forms)
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -151,15 +167,17 @@ const AuthForm: React.FC<AuthFormProps> = ({ isLogin }) => {
 
   const { state, login, register } = useAuth();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
-  // Validate email
-  const validateEmail = (email: string): boolean => {
+  // --------------- Validation ---------------
+  const validateEmail = (value: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email) {
-      setEmailError("Username is required");
+    if (!value) {
+      setEmailError("Email is required");
       return false;
     }
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(value)) {
       setEmailError("Please enter a valid email");
       return false;
     }
@@ -167,13 +185,12 @@ const AuthForm: React.FC<AuthFormProps> = ({ isLogin }) => {
     return true;
   };
 
-  // Validate password
-  const validatePassword = (password: string): boolean => {
-    if (!password) {
+  const validatePassword = (value: string): boolean => {
+    if (!value) {
       setPasswordError("Password is required");
       return false;
     }
-    if (password.length < 6) {
+    if (value.length < 6) {
       setPasswordError("Password must be at least 6 characters");
       return false;
     }
@@ -181,286 +198,615 @@ const AuthForm: React.FC<AuthFormProps> = ({ isLogin }) => {
     return true;
   };
 
-  // Validate confirm password
-  const validateConfirmPassword = (confirmPass: string): boolean => {
-    if (!isLogin) {
-      if (!confirmPass) {
-        setConfirmPasswordError("Please confirm your password");
-        return false;
-      }
-      if (confirmPass !== password) {
-        setConfirmPasswordError("Passwords do not match");
-        return false;
-      }
-      setConfirmPasswordError("");
+  const validateConfirmPassword = (value: string): boolean => {
+    if (!value) {
+      setConfirmPasswordError("Please confirm your password");
+      return false;
     }
+    if (value !== password) {
+      setConfirmPasswordError("Passwords do not match");
+      return false;
+    }
+    setConfirmPasswordError("");
     return true;
+  };
+
+  // --------------- Handlers ---------------
+  const handleToggle = () => {
+    setIsSignUp((prev) => {
+      const next = !prev;
+      window.history.replaceState(null, "", next ? "/register" : "/login");
+      return next;
+    });
+    setEmailError("");
+    setPasswordError("");
+    setConfirmPasswordError("");
+    setConfirmPassword("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     const isEmailValid = validateEmail(email);
     const isPasswordValid = validatePassword(password);
-    const isConfirmPasswordValid = validateConfirmPassword(confirmPassword);
+    const isConfirmValid = isSignUp
+      ? validateConfirmPassword(confirmPassword)
+      : true;
 
-    if (
-      !isEmailValid ||
-      !isPasswordValid ||
-      (!isLogin && !isConfirmPasswordValid)
-    ) {
+    if (!isEmailValid || !isPasswordValid || (isSignUp && !isConfirmValid))
       return;
-    }
 
     try {
-      if (isLogin) {
-        await login(email, password);
-      } else {
+      if (isSignUp) {
         await register(email, password);
+      } else {
+        await login(email, password);
       }
-
-      if (!state.error) {
-        navigate("/dashboard");
-      }
-    } catch (error) {
+      if (!state.error) navigate("/dashboard");
+    } catch {
       // Error handled by AuthContext
     }
   };
 
+  // --------------- Form Renderer ---------------
+  const renderForm = (forSignUp: boolean) => (
+    <Box
+      sx={{
+        width: "100%",
+        maxWidth: "400px",
+        animation: `${fadeInUp} 0.6s ease-out`,
+      }}
+    >
+      {/* Title */}
+      <Typography
+        variant="h4"
+        sx={{
+          fontWeight: 800,
+          color: "#1a202c",
+          mb: 0.5,
+          letterSpacing: "-0.5px",
+          fontSize: { xs: "1.75rem", md: "2rem" },
+        }}
+      >
+        {forSignUp ? "Create Account" : "Welcome Back"}
+      </Typography>
+      <Typography
+        variant="body2"
+        sx={{
+          color: "#718096",
+          mb: 3,
+          fontSize: "14px",
+        }}
+      >
+        {forSignUp
+          ? "Start your productivity journey today"
+          : "Sign in to continue your focus session"}
+      </Typography>
+
+      {/* Social Login */}
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <SocialButton>
+          <Google sx={{ fontSize: 20, color: "#DB4437" }} />
+        </SocialButton>
+        <SocialButton>
+          <GitHub sx={{ fontSize: 20, color: "#333" }} />
+        </SocialButton>
+        <SocialButton>
+          <Apple sx={{ fontSize: 20, color: "#000" }} />
+        </SocialButton>
+      </Box>
+
+      {/* Divider */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          mb: 3,
+          gap: 2,
+        }}
+      >
+        <Box sx={{ flex: 1, height: "1px", background: "linear-gradient(to right, transparent, #cbd5e0)" }} />
+        <Typography
+          variant="caption"
+          sx={{ color: "#a0aec0", fontSize: "12px", letterSpacing: "1px", textTransform: "uppercase" }}
+        >
+          or use email
+        </Typography>
+        <Box sx={{ flex: 1, height: "1px", background: "linear-gradient(to left, transparent, #cbd5e0)" }} />
+      </Box>
+
+      {/* Error Alert */}
+      <Collapse in={!!state.error}>
+        <Alert
+          severity="error"
+          sx={{
+            mb: 2,
+            borderRadius: "12px",
+            backdropFilter: "blur(10px)",
+            backgroundColor: "rgba(211, 47, 47, 0.08)",
+          }}
+        >
+          {state.error}
+        </Alert>
+      </Collapse>
+
+      {/* Form */}
+      <form onSubmit={handleSubmit}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+          <StyledTextField
+            fullWidth
+            label="Email Address"
+            type="email"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (emailError) validateEmail(e.target.value);
+            }}
+            onBlur={() => validateEmail(email)}
+            error={!!emailError}
+            helperText={emailError}
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <CheckCircle
+                      sx={{
+                        fontSize: 20,
+                        color:
+                          email && !emailError
+                            ? "#00d4d4"
+                            : "rgba(0,0,0,0.1)",
+                        transition: "all 0.3s ease",
+                      }}
+                    />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+
+          <StyledTextField
+            fullWidth
+            label="Password"
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (passwordError) validatePassword(e.target.value);
+            }}
+            onBlur={() => validatePassword(password)}
+            error={!!passwordError}
+            helperText={passwordError}
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                      sx={{
+                        color: "#00b8b8",
+                        transition: "all 0.2s ease",
+                        "&:hover": { color: "#008888" },
+                      }}
+                    >
+                      {showPassword ? (
+                        <VisibilityOff sx={{ fontSize: 20 }} />
+                      ) : (
+                        <Visibility sx={{ fontSize: 20 }} />
+                      )}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+
+          {forSignUp && (
+            <StyledTextField
+              fullWidth
+              label="Confirm Password"
+              type={showConfirmPassword ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                if (confirmPasswordError)
+                  validateConfirmPassword(e.target.value);
+              }}
+              onBlur={() => validateConfirmPassword(confirmPassword)}
+              error={!!confirmPasswordError}
+              helperText={confirmPasswordError}
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
+                        edge="end"
+                        sx={{
+                          color: "#00b8b8",
+                          transition: "all 0.2s ease",
+                          "&:hover": { color: "#008888" },
+                        }}
+                      >
+                        {showConfirmPassword ? (
+                          <VisibilityOff sx={{ fontSize: 20 }} />
+                        ) : (
+                          <Visibility sx={{ fontSize: 20 }} />
+                        )}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+          )}
+
+          {!forSignUp && (
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mt: -1,
+              }}
+            >
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    sx={{
+                      color: "#cbd5e0",
+                      "&.Mui-checked": { color: "#00d4d4" },
+                      "& .MuiSvgIcon-root": { fontSize: 20 },
+                    }}
+                  />
+                }
+                label={
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "#718096", fontSize: "13px" }}
+                  >
+                    Remember me
+                  </Typography>
+                }
+              />
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "#00b8b8",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "color 0.2s ease",
+                  "&:hover": { color: "#008888" },
+                }}
+              >
+                Forgot password?
+              </Typography>
+            </Box>
+          )}
+
+          <SubmitButton
+            type="submit"
+            fullWidth
+            variant="contained"
+            disabled={state.loading}
+            sx={{
+              mt: 1,
+              animation: state.loading ? "none" : `${pulse} 2s ease-in-out infinite`,
+              "&:hover": {
+                animation: "none",
+              },
+            }}
+          >
+            {state.loading ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : forSignUp ? (
+              "Create Account"
+            ) : (
+              "Sign In"
+            )}
+          </SubmitButton>
+
+          {/* Mobile-only toggle link */}
+          {isMobile && (
+            <Box sx={{ textAlign: "center", mt: 1 }}>
+              <Typography variant="body2" sx={{ color: "#718096" }}>
+                {forSignUp
+                  ? "Already have an account?"
+                  : "Don't have an account?"}{" "}
+                <Box
+                  component="span"
+                  onClick={handleToggle}
+                  sx={{
+                    color: "#00b8b8",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    transition: "color 0.2s ease",
+                    "&:hover": { color: "#008888" },
+                  }}
+                >
+                  {forSignUp ? "Sign In" : "Sign Up"}
+                </Box>
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      </form>
+    </Box>
+  );
+
+  // --------------- Mobile Layout ---------------
+  if (isMobile) {
+    return (
+      <Box
+        sx={{
+          width: "100vw",
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "linear-gradient(160deg, #f0f4f8 0%, #e2e8f0 100%)",
+          p: 3,
+        }}
+      >
+        <Box
+          sx={{
+            width: "100%",
+            maxWidth: "440px",
+            background: "rgba(255, 255, 255, 0.75)",
+            backdropFilter: "blur(20px)",
+            borderRadius: "24px",
+            p: 4,
+            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.08)",
+          }}
+        >
+          {renderForm(isSignUp)}
+        </Box>
+      </Box>
+    );
+  }
+
+  // --------------- Desktop Layout (Double Slider) ---------------
   return (
-    <Container>
-      {/* Left Panel with Image */}
-      <LeftPanel>
-        <ImageContainer>
-          <Zoom in timeout={800}>
-            <img src={focusTrackImage} alt="Time Management" />
-          </Zoom>
-          <Fade in timeout={1000} style={{ transitionDelay: "300ms" }}>
+    <Box
+      sx={{
+        width: "100vw",
+        height: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "linear-gradient(160deg, #f0f4f8 0%, #e2e8f0 50%, #dfe6ed 100%)",
+        overflow: "hidden",
+      }}
+    >
+      {/* Main Card Container */}
+      <Box
+        sx={{
+          position: "relative",
+          width: "min(1000px, 90vw)",
+          height: "min(640px, 85vh)",
+          borderRadius: "28px",
+          overflow: "hidden",
+          boxShadow:
+            "0 25px 80px rgba(0, 0, 0, 0.12), 0 8px 32px rgba(0, 0, 0, 0.08)",
+        }}
+      >
+        {/* ---- Sign Up Form (Left Side) ---- */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "50%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(255, 255, 255, 0.92)",
+            backdropFilter: "blur(20px)",
+            px: 5,
+            py: 4,
+            opacity: isSignUp ? 1 : 0,
+            transition: "opacity 0.5s ease-in-out",
+            transitionDelay: isSignUp ? "0.35s" : "0s",
+            pointerEvents: isSignUp ? "auto" : "none",
+          }}
+        >
+          {renderForm(true)}
+        </Box>
+
+        {/* ---- Sign In Form (Right Side) ---- */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            width: "50%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(255, 255, 255, 0.92)",
+            backdropFilter: "blur(20px)",
+            px: 5,
+            py: 4,
+            opacity: isSignUp ? 0 : 1,
+            transition: "opacity 0.5s ease-in-out",
+            transitionDelay: isSignUp ? "0s" : "0.35s",
+            pointerEvents: isSignUp ? "none" : "auto",
+          }}
+        >
+          {renderForm(false)}
+        </Box>
+
+        {/* ---- Sliding Overlay Panel ---- */}
+        <Box
+          sx={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "50%",
+            height: "100%",
+            zIndex: 100,
+            transform: isSignUp ? "translateX(100%)" : "translateX(0)",
+            transition:
+              "transform 0.8s cubic-bezier(0.65, 0, 0.35, 1), clip-path 0.8s cubic-bezier(0.65, 0, 0.35, 1)",
+            clipPath: isSignUp
+              ? "polygon(12% 0, 100% 0, 100% 100%, 0 100%)"
+              : "polygon(0 0, 100% 0, 88% 100%, 0 100%)",
+            overflow: "hidden",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+
+            /* Blurred focustrack.jpg background */
+            "&::before": {
+              content: '""',
+              position: "absolute",
+              top: "-30px",
+              left: "-30px",
+              right: "-30px",
+              bottom: "-30px",
+              backgroundImage: `url(${focusTrackImage})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              filter: "blur(12px)",
+              zIndex: 0,
+            },
+
+            /* Teal gradient overlay for readability */
+            "&::after": {
+              content: '""',
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background:
+                "linear-gradient(160deg, rgba(0, 220, 220, 0.72) 0%, rgba(0, 180, 180, 0.82) 40%, rgba(0, 140, 140, 0.88) 100%)",
+              zIndex: 1,
+            },
+          }}
+        >
+          {/* Overlay Content */}
+          <Box
+            sx={{
+              position: "relative",
+              zIndex: 2,
+              textAlign: "center",
+              maxWidth: "380px",
+              px: 4,
+            }}
+          >
+            {/* Floating image card */}
+            <Box
+              component="img"
+              src={focusTrackImage}
+              alt="FocusTrack"
+              sx={{
+                width: "75%",
+                maxWidth: "280px",
+                borderRadius: "20px",
+                boxShadow: "0 20px 60px rgba(0, 0, 0, 0.35)",
+                mb: 3,
+                animation: `${float} 4s ease-in-out infinite`,
+              }}
+            />
+
+            {/* Title */}
             <Typography
-              variant="h3"
+              variant="h4"
               sx={{
                 color: "white",
-                fontWeight: 700,
-                mb: 2,
-                textShadow: "0 2px 10px rgba(0, 0, 0, 0.2)",
+                fontWeight: 800,
+                mb: 1.5,
+                textShadow: "0 2px 20px rgba(0, 0, 0, 0.2)",
+                letterSpacing: "-0.5px",
+                fontSize: "1.8rem",
               }}
             >
               FocusTrack Hub
             </Typography>
-          </Fade>
-          <Fade in timeout={1000} style={{ transitionDelay: "500ms" }}>
+
+            {/* Subtitle */}
             <Typography
-              variant="body1"
+              variant="body2"
               sx={{
-                color: "rgba(255, 255, 255, 0.95)",
-                fontSize: "16px",
-                lineHeight: 1.6,
-                maxWidth: "400px",
-                margin: "0 auto",
-                textShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+                color: "rgba(255, 255, 255, 0.9)",
+                fontSize: "14px",
+                lineHeight: 1.7,
+                mb: 4,
+                textShadow: "0 1px 8px rgba(0, 0, 0, 0.1)",
               }}
             >
-              Unleash Your Productivity Potential with FocusTrack's Time
-              Management Excellence Platform
+              {isSignUp
+                ? "Already part of the team? Sign in and pick up right where you left off."
+                : "Start your journey to peak productivity. Create an account and take control of your time."}
             </Typography>
-          </Fade>
-        </ImageContainer>
-      </LeftPanel>
 
-      {/* Right Panel with Form */}
-      <RightPanel>
-        <FormContainer>
-          {/* Header with slide animation */}
-          <Fade in timeout={600} key={isLogin ? "login" : "signup"}>
-            <Typography
-              variant="h3"
-              sx={{
-                fontWeight: 300,
-                color: "#2d3748",
-                mb: 1,
-                letterSpacing: "2px",
-                textTransform: "uppercase",
-              }}
-            >
-              {isLogin ? "LOGIN" : "SIGN UP"}
-            </Typography>
-          </Fade>
+            {/* Toggle Button */}
+            <OverlayToggleButton variant="outlined" onClick={handleToggle}>
+              {isSignUp ? "Sign In" : "Sign Up"}
+            </OverlayToggleButton>
+          </Box>
 
-          {/* Error Alert */}
-          <Collapse in={!!state.error}>
-            <Alert
-              severity="error"
-              sx={{ mb: 3, borderRadius: "8px" }}
-              onClose={() => {}}
-            >
-              {state.error}
-            </Alert>
-          </Collapse>
-
-          {/* Form with transition */}
-          <Zoom in timeout={500} key={isLogin ? "login-form" : "signup-form"}>
-            <form onSubmit={handleSubmit}>
-              <Box sx={{ mt: 4 }}>
-                {/* Username/Email Field */}
-                <StyledTextField
-                  fullWidth
-                  label="Username"
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (emailError) validateEmail(e.target.value);
-                  }}
-                  onBlur={() => validateEmail(email)}
-                  error={!!emailError}
-                  helperText={emailError}
-                  sx={{ mb: 3 }}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <CheckCircle
-                          sx={{
-                            color: email && !emailError ? "#00d4d4" : "#ccc",
-                          }}
-                        />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-
-                {/* Password Field */}
-                <StyledTextField
-                  fullWidth
-                  label="Password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (passwordError) validatePassword(e.target.value);
-                  }}
-                  onBlur={() => validatePassword(password)}
-                  error={!!passwordError}
-                  helperText={passwordError}
-                  sx={{ mb: isLogin ? 2 : 3 }}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={() => setShowPassword(!showPassword)}
-                          edge="end"
-                          sx={{ color: "#00d4d4" }}
-                        >
-                          {showPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-
-                {/* Confirm Password (Register Only) with Fade */}
-                <Collapse in={!isLogin} timeout={400}>
-                  <StyledTextField
-                    fullWidth
-                    label="Confirm Password"
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={confirmPassword}
-                    onChange={(e) => {
-                      setConfirmPassword(e.target.value);
-                      if (confirmPasswordError)
-                        validateConfirmPassword(e.target.value);
-                    }}
-                    onBlur={() => validateConfirmPassword(confirmPassword)}
-                    error={!!confirmPasswordError}
-                    helperText={confirmPasswordError}
-                    sx={{ mb: 2 }}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            onClick={() =>
-                              setShowConfirmPassword(!showConfirmPassword)
-                            }
-                            edge="end"
-                            sx={{ color: "#00d4d4" }}
-                          >
-                            {showConfirmPassword ? (
-                              <VisibilityOff />
-                            ) : (
-                              <Visibility />
-                            )}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Collapse>
-
-                {/* Remember Me (Login Only) with Fade */}
-                <Collapse in={isLogin} timeout={400}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={rememberMe}
-                        onChange={(e) => setRememberMe(e.target.checked)}
-                        sx={{
-                          color: "#00d4d4",
-                          "&.Mui-checked": {
-                            color: "#00d4d4",
-                          },
-                        }}
-                      />
-                    }
-                    label={
-                      <Typography variant="body2" color="text.secondary">
-                        Agree to remember the password.
-                      </Typography>
-                    }
-                    sx={{ mb: 3 }}
-                  />
-                </Collapse>
-
-                {/* Submit Button */}
-                <StyledButton
-                  type="submit"
-                  fullWidth
-                  variant="contained"
-                  disabled={state.loading}
-                  sx={{ mb: 3 }}
-                >
-                  {state.loading ? (
-                    <CircularProgress size={24} color="inherit" />
-                  ) : isLogin ? (
-                    "SIGN IN"
-                  ) : (
-                    "CREATE ACCOUNT"
-                  )}
-                </StyledButton>
-
-                {/* Toggle Link with Fade */}
-                <Fade in timeout={600}>
-                  <Box sx={{ textAlign: "center" }}>
-                    <Typography variant="body2" color="text.secondary">
-                      {isLogin ? "No account?" : "Already have an account?"}{" "}
-                      <Link
-                        to={isLogin ? "/register" : "/login"}
-                        style={{
-                          color: "#00d4d4",
-                          fontWeight: 600,
-                          textDecoration: "none",
-                          transition: "all 0.3s ease",
-                        }}
-                      >
-                        {isLogin ? "Sign Up" : "Sign In"}
-                      </Link>
-                    </Typography>
-                  </Box>
-                </Fade>
-              </Box>
-            </form>
-          </Zoom>
-        </FormContainer>
-      </RightPanel>
-    </Container>
+          {/* Decorative floating circles */}
+          <Box
+            sx={{
+              position: "absolute",
+              top: "10%",
+              left: "8%",
+              width: "60px",
+              height: "60px",
+              borderRadius: "50%",
+              border: "2px solid rgba(255, 255, 255, 0.15)",
+              zIndex: 2,
+              animation: `${float} 5s ease-in-out infinite`,
+              animationDelay: "1s",
+            }}
+          />
+          <Box
+            sx={{
+              position: "absolute",
+              bottom: "12%",
+              right: "10%",
+              width: "40px",
+              height: "40px",
+              borderRadius: "50%",
+              backgroundColor: "rgba(255, 255, 255, 0.08)",
+              zIndex: 2,
+              animation: `${float} 6s ease-in-out infinite`,
+              animationDelay: "2s",
+            }}
+          />
+          <Box
+            sx={{
+              position: "absolute",
+              top: "60%",
+              left: "5%",
+              width: "24px",
+              height: "24px",
+              borderRadius: "50%",
+              backgroundColor: "rgba(255, 255, 255, 0.1)",
+              zIndex: 2,
+              animation: `${float} 4.5s ease-in-out infinite`,
+              animationDelay: "0.5s",
+            }}
+          />
+        </Box>
+      </Box>
+    </Box>
   );
 };
 
