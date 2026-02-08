@@ -36,6 +36,7 @@ import EmptyState from "../components/EmptyState";
 import LoadingState from "../components/LoadingState";
 import AddTaskModal from "../components/AddTaskModal";
 import EditTaskModal from "../components/EditTaskModal";
+import ProductivityCharts from "../components/ProductivityCharts";
 
 interface Task {
   id: string;
@@ -497,6 +498,19 @@ const Dashboard: React.FC = () => {
               />
             )}
           </Box>
+
+          {/* Charts */}
+          {!loading && tasks.length > 0 && (
+            <Box
+              sx={{
+                animation: `${fadeInUp} 0.5s ease-out`,
+                animationDelay: "0.2s",
+                animationFillMode: "both",
+              }}
+            >
+              <ProductivityCharts tasks={tasks} />
+            </Box>
+          )}
 
           {/* Tasks Header + Filters */}
           <Box
