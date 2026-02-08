@@ -85,6 +85,15 @@ export class TimeEntriesController {
   }
 
   /**
+   * Get productivity stats for the user
+   * GET /time-entries/productivity-stats
+   */
+  @Get('productivity-stats')
+  getProductivityStats(@Req() req: Request & { user: any }) {
+    return this.timeEntriesService.getProductivityStats(req.user);
+  }
+
+  /**
    * Get all active timers for the user
    * GET /time-entries/active
    */

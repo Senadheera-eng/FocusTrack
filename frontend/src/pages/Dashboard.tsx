@@ -17,6 +17,10 @@ import {
   TrendingUp,
   AccessTime,
   Menu as MenuIcon,
+  Today,
+  DateRange,
+  LocalFireDepartment,
+  Schedule,
 } from "@mui/icons-material";
 import { styled, keyframes } from "@mui/material/styles";
 
@@ -37,6 +41,18 @@ interface Task {
   createdAt: string;
   updatedAt: string;
   completedAt?: string;
+}
+
+interface ProductivityStats {
+  completedToday: number;
+  completedThisWeek: number;
+  hoursTrackedToday: number;
+  hoursTrackedThisWeek: number;
+  totalTasks: number;
+  totalCompleted: number;
+  totalInProgress: number;
+  totalTodo: number;
+  streakDays: number;
 }
 
 // ======================== ANIMATIONS ========================
@@ -111,6 +127,14 @@ const getGreeting = (): string => {
   return "Good evening";
 };
 
+const formatHours = (hours: number): string => {
+  if (hours < 0.01) return "0m";
+  if (hours < 1) return `${Math.round(hours * 60)}m`;
+  const h = Math.floor(hours);
+  const m = Math.round((hours - h) * 60);
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+};
+
 // ======================== COMPONENT ========================
 
 const Dashboard: React.FC = () => {
@@ -123,6 +147,7 @@ const Dashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "todo" | "in_progress" | "done">("all");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [prodStats, setProdStats] = useState<ProductivityStats | null>(null);
 
   // Modal states
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -133,6 +158,7 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     fetchTasks();
+    fetchProductivityStats();
   }, [state.isAuthenticated]);
 
   const fetchTasks = async () => {
@@ -148,6 +174,16 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const fetchProductivityStats = async () => {
+    if (!state.isAuthenticated) return;
+    try {
+      const res = await axios.get("http://localhost:4000/time-entries/productivity-stats");
+      setProdStats(res.data);
+    } catch {
+      // Stats are non-critical, fail silently
+    }
+  };
+
   const handleMarkComplete = async (id: string) => {
     try {
       await axios.patch(`http://localhost:4000/tasks/${id}`, {
@@ -160,6 +196,7 @@ const Dashboard: React.FC = () => {
             : t,
         ),
       );
+      fetchProductivityStats();
     } catch {
       alert("Failed to update task");
     }
@@ -171,6 +208,7 @@ const Dashboard: React.FC = () => {
     try {
       await axios.delete(`http://localhost:4000/tasks/${id}`);
       setTasks(tasks.filter((t) => t.id !== id));
+      fetchProductivityStats();
     } catch {
       alert("Failed to delete task");
     }
@@ -308,7 +346,7 @@ const Dashboard: React.FC = () => {
             </Typography>
           </Box>
 
-          {/* Stats Cards */}
+          {/* Productivity Stats */}
           <Box
             sx={{
               display: "grid",
@@ -318,9 +356,54 @@ const Dashboard: React.FC = () => {
                 md: "repeat(4, 1fr)",
               },
               gap: { xs: 2, md: 3 },
-              mb: 4,
+              mb: 3,
               animation: `${fadeInUp} 0.5s ease-out`,
               animationDelay: "0.1s",
+              animationFillMode: "both",
+            }}
+          >
+            <StatsCard
+              icon={Today}
+              value={prodStats?.completedToday ?? 0}
+              label="Completed Today"
+              color="#10b981"
+              bgColor="rgba(16, 185, 129, 0.1)"
+            />
+            <StatsCard
+              icon={DateRange}
+              value={prodStats?.completedThisWeek ?? 0}
+              label="Completed This Week"
+              color="#0891b2"
+              bgColor="rgba(8, 145, 178, 0.1)"
+            />
+            <StatsCard
+              icon={Schedule}
+              value={formatHours(prodStats?.hoursTrackedToday ?? 0)}
+              label="Hours Today"
+              color="#f59e0b"
+              bgColor="rgba(245, 158, 11, 0.1)"
+            />
+            <StatsCard
+              icon={AccessTime}
+              value={formatHours(prodStats?.hoursTrackedThisWeek ?? 0)}
+              label="Hours This Week"
+              color="#8b5cf6"
+              bgColor="rgba(139, 92, 246, 0.1)"
+            />
+          </Box>
+
+          {/* Task Overview Stats */}
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "repeat(2, 1fr)",
+                sm: "repeat(4, 1fr)",
+              },
+              gap: { xs: 2, md: 3 },
+              mb: 4,
+              animation: `${fadeInUp} 0.5s ease-out`,
+              animationDelay: "0.15s",
               animationFillMode: "both",
             }}
           >
@@ -345,13 +428,23 @@ const Dashboard: React.FC = () => {
               color="#f59e0b"
               bgColor="rgba(245, 158, 11, 0.1)"
             />
-            <StatsCard
-              icon={AccessTime}
-              value={stats.todo}
-              label="To Do"
-              color="#8b5cf6"
-              bgColor="rgba(139, 92, 246, 0.1)"
-            />
+            {prodStats && prodStats.streakDays > 0 ? (
+              <StatsCard
+                icon={LocalFireDepartment}
+                value={`${prodStats.streakDays}d`}
+                label="Streak"
+                color="#ef4444"
+                bgColor="rgba(239, 68, 68, 0.1)"
+              />
+            ) : (
+              <StatsCard
+                icon={AccessTime}
+                value={stats.todo}
+                label="To Do"
+                color="#8b5cf6"
+                bgColor="rgba(139, 92, 246, 0.1)"
+              />
+            )}
           </Box>
 
           {/* Tasks Header + Filters */}
@@ -492,7 +585,7 @@ const Dashboard: React.FC = () => {
       <AddTaskModal
         open={addModalOpen}
         onClose={() => setAddModalOpen(false)}
-        onTaskAdded={fetchTasks}
+        onTaskAdded={() => { fetchTasks(); fetchProductivityStats(); }}
       />
       <EditTaskModal
         open={editModalOpen}
@@ -501,7 +594,7 @@ const Dashboard: React.FC = () => {
           setEditModalOpen(false);
           setTaskToEdit(null);
         }}
-        onTaskUpdated={fetchTasks}
+        onTaskUpdated={() => { fetchTasks(); fetchProductivityStats(); }}
       />
     </Box>
   );
