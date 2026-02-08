@@ -23,6 +23,8 @@ import {
   Schedule,
   Search as SearchIcon,
   Close as CloseIcon,
+  SwapVert as SortIcon,
+  FileDownload as ExportIcon,
 } from "@mui/icons-material";
 import { styled, keyframes } from "@mui/material/styles";
 
@@ -150,6 +152,7 @@ const Dashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "todo" | "in_progress" | "done">("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "priority" | "title">("newest");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [prodStats, setProdStats] = useState<ProductivityStats | null>(null);
 
@@ -227,6 +230,27 @@ const Dashboard: React.FC = () => {
     setEditModalOpen(true);
   };
 
+  const handleExportCSV = () => {
+    if (tasks.length === 0) return;
+    const headers = ["Title", "Description", "Status", "Priority", "Created At", "Completed At"];
+    const rows = tasks.map((t) => [
+      `"${t.title.replace(/"/g, '""')}"`,
+      `"${(t.description || "").replace(/"/g, '""')}"`,
+      t.status,
+      t.priority,
+      new Date(t.createdAt).toLocaleString(),
+      t.completedAt ? new Date(t.completedAt).toLocaleString() : "",
+    ]);
+    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `focustrack-tasks-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Calculate stats
   const stats = {
     total: tasks.length,
@@ -235,16 +259,32 @@ const Dashboard: React.FC = () => {
     todo: tasks.filter((t) => t.status === "todo").length,
   };
 
-  // Filtered tasks
-  const filteredTasks = tasks.filter((t) => {
-    const matchesFilter = filter === "all" || t.status === filter;
-    const query = searchQuery.toLowerCase().trim();
-    const matchesSearch =
-      !query ||
-      t.title.toLowerCase().includes(query) ||
-      (t.description && t.description.toLowerCase().includes(query));
-    return matchesFilter && matchesSearch;
-  });
+  // Filtered and sorted tasks
+  const filteredTasks = tasks
+    .filter((t) => {
+      const matchesFilter = filter === "all" || t.status === filter;
+      const query = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !query ||
+        t.title.toLowerCase().includes(query) ||
+        (t.description && t.description.toLowerCase().includes(query));
+      return matchesFilter && matchesSearch;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "oldest":
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case "priority": {
+          const order = { high: 0, medium: 1, low: 2 };
+          return order[a.priority] - order[b.priority];
+        }
+        case "title":
+          return a.title.localeCompare(b.title);
+        case "newest":
+        default:
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+    });
 
   if (!state.isAuthenticated) {
     return (
@@ -549,6 +589,66 @@ const Dashboard: React.FC = () => {
                   </IconButton>
                 )}
               </Box>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  background: "rgba(255, 255, 255, 0.7)",
+                  backdropFilter: "blur(8px)",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(0, 0, 0, 0.08)",
+                  px: 1.5,
+                  py: 0.5,
+                  transition: "all 0.3s ease",
+                  "&:focus-within": {
+                    borderColor: "#0891b2",
+                    boxShadow: "0 2px 12px rgba(8, 145, 178, 0.1)",
+                    background: "rgba(255, 255, 255, 0.95)",
+                  },
+                }}
+              >
+                <SortIcon sx={{ color: "#94a3b8", fontSize: 20, mr: 1 }} />
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                  style={{
+                    border: "none",
+                    outline: "none",
+                    background: "transparent",
+                    fontSize: "13.5px",
+                    color: "#0f172a",
+                    fontFamily: "inherit",
+                    cursor: "pointer",
+                  }}
+                >
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="priority">Priority</option>
+                  <option value="title">Title A-Z</option>
+                </select>
+              </Box>
+              <IconButton
+                onClick={handleExportCSV}
+                disabled={tasks.length === 0}
+                sx={{
+                  color: "#64748b",
+                  border: "1px solid rgba(0, 0, 0, 0.08)",
+                  borderRadius: "12px",
+                  width: 42,
+                  height: 42,
+                  background: "rgba(255, 255, 255, 0.7)",
+                  backdropFilter: "blur(8px)",
+                  transition: "all 0.3s ease",
+                  "&:hover": {
+                    color: "#0891b2",
+                    borderColor: "#0891b2",
+                    background: "rgba(8, 145, 178, 0.06)",
+                  },
+                }}
+                title="Export CSV"
+              >
+                <ExportIcon sx={{ fontSize: 20 }} />
+              </IconButton>
               <AddTaskButton
                 variant="contained"
                 startIcon={<AddIcon />}
