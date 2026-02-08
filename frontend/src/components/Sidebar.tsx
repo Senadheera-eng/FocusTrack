@@ -16,6 +16,7 @@ import {
   Close,
 } from "@mui/icons-material";
 import { keyframes } from "@mui/material/styles";
+import { useNavigate, useLocation } from "react-router-dom";
 import focusTrackImage from "../assets/focustrack.jpg";
 
 // ======================== ANIMATIONS ========================
@@ -61,10 +62,10 @@ interface SidebarProps {
 const SIDEBAR_WIDTH = 280;
 
 const navItems = [
-  { icon: SpaceDashboard, label: "Dashboard", active: true },
-  { icon: Assignment, label: "My Tasks", active: false },
-  { icon: Analytics, label: "Analytics", active: false, disabled: true },
-  { icon: Settings, label: "Settings", active: false, disabled: true },
+  { icon: SpaceDashboard, label: "Dashboard", path: "/dashboard" },
+  { icon: Assignment, label: "My Tasks", path: "/my-tasks" },
+  { icon: Analytics, label: "Analytics", path: "/analytics" },
+  { icon: Settings, label: "Settings", path: "/settings" },
 ];
 
 // ======================== COMPONENT ========================
@@ -77,6 +78,8 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const initials = userEmail
     ? userEmail
@@ -84,6 +87,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         .slice(0, 2)
         .toUpperCase()
     : "FT";
+
+  const handleNavClick = (item: (typeof navItems)[number]) => {
+    navigate(item.path);
+    if (isMobile) onMobileClose();
+  };
 
   const sidebarContent = (
     <Box
@@ -180,66 +188,54 @@ const Sidebar: React.FC<SidebarProps> = ({
           Menu
         </Typography>
 
-        {navItems.map((item) => (
-          <Box
-            key={item.label}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 1.5,
-              px: 2,
-              py: 1.5,
-              borderRadius: "14px",
-              cursor: item.disabled ? "default" : "pointer",
-              opacity: item.disabled ? 0.35 : 1,
-              background: item.active
-                ? "rgba(255, 255, 255, 0.15)"
-                : "transparent",
-              backdropFilter: item.active ? "blur(8px)" : "none",
-              border: item.active
-                ? "1px solid rgba(255, 255, 255, 0.15)"
-                : "1px solid transparent",
-              transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-              ...(!item.disabled &&
-                !item.active && {
-                  "&:hover": {
-                    background: "rgba(255, 255, 255, 0.08)",
-                    border: "1px solid rgba(255, 255, 255, 0.08)",
-                  },
-                }),
-            }}
-          >
-            <item.icon
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <Box
+              key={item.label}
+              onClick={() => handleNavClick(item)}
               sx={{
-                color: item.active ? "white" : "rgba(255,255,255,0.6)",
-                fontSize: 20,
-              }}
-            />
-            <Typography
-              sx={{
-                color: item.active ? "white" : "rgba(255,255,255,0.7)",
-                fontSize: "14px",
-                fontWeight: item.active ? 600 : 500,
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                px: 2,
+                py: 1.5,
+                borderRadius: "14px",
+                cursor: "pointer",
+                background: isActive
+                  ? "rgba(255, 255, 255, 0.15)"
+                  : "transparent",
+                backdropFilter: isActive ? "blur(8px)" : "none",
+                border: isActive
+                  ? "1px solid rgba(255, 255, 255, 0.15)"
+                  : "1px solid transparent",
+                transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                ...(!isActive && {
+                    "&:hover": {
+                      background: "rgba(255, 255, 255, 0.08)",
+                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                    },
+                  }),
               }}
             >
-              {item.label}
-            </Typography>
-            {item.disabled && (
+              <item.icon
+                sx={{
+                  color: isActive ? "white" : "rgba(255,255,255,0.6)",
+                  fontSize: 20,
+                }}
+              />
               <Typography
                 sx={{
-                  color: "rgba(255,255,255,0.3)",
-                  fontSize: "9px",
-                  fontWeight: 600,
-                  letterSpacing: "0.5px",
-                  ml: "auto",
-                  textTransform: "uppercase",
+                  color: isActive ? "white" : "rgba(255,255,255,0.7)",
+                  fontSize: "14px",
+                  fontWeight: isActive ? 600 : 500,
                 }}
               >
-                Soon
+                {item.label}
               </Typography>
-            )}
-          </Box>
-        ))}
+            </Box>
+          );
+        })}
       </Box>
 
       {/* User section */}

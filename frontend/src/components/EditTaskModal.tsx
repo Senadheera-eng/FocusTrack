@@ -11,6 +11,7 @@ import {
   MenuItem,
   CircularProgress,
   Alert,
+  Typography,
 } from "@mui/material";
 import { Close as CloseIcon } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
@@ -21,6 +22,8 @@ interface Task {
   title: string;
   description?: string;
   status: "todo" | "in_progress" | "done";
+  priority: "low" | "medium" | "high";
+  dueDate?: string;
 }
 
 interface EditTaskModalProps {
@@ -77,6 +80,9 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<"todo" | "in_progress" | "done">("todo");
+  const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
+  const [dueDate, setDueDate] = useState("");
+  const [dueTime, setDueTime] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [titleError, setTitleError] = useState("");
@@ -86,6 +92,21 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
       setTitle(task.title);
       setDescription(task.description || "");
       setStatus(task.status);
+      setPriority(task.priority);
+      if (task.dueDate) {
+        const d = new Date(task.dueDate);
+        setDueDate(d.toISOString().split("T")[0]);
+        const hours = d.getHours();
+        const minutes = d.getMinutes();
+        if (hours !== 0 || minutes !== 0) {
+          setDueTime(`${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`);
+        } else {
+          setDueTime("");
+        }
+      } else {
+        setDueDate("");
+        setDueTime("");
+      }
       setError("");
       setTitleError("");
     }
@@ -117,11 +138,20 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
     setError("");
 
     try {
-      await axios.patch(`http://localhost:4000/tasks/${task.id}`, {
+      const payload: Record<string, any> = {
         title: title.trim(),
         description: description.trim() || undefined,
         status,
-      });
+        priority,
+      };
+
+      if (dueDate) {
+        payload.dueDate = dueTime
+          ? new Date(`${dueDate}T${dueTime}`).toISOString()
+          : new Date(`${dueDate}T00:00:00`).toISOString();
+      }
+
+      await axios.patch(`http://localhost:4000/tasks/${task.id}`, payload);
 
       onTaskUpdated();
       onClose();
@@ -214,11 +244,11 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               multiline
-              rows={4}
+              rows={3}
               fullWidth
               disabled={loading}
               helperText={`${description.length}/1000 characters`}
-              inputProps={{ maxLength: 1000 }}
+              slotProps={{ htmlInput: { maxLength: 1000 } }}
             />
 
             <StyledTextField
@@ -235,6 +265,53 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
               <MenuItem value="in_progress">In Progress</MenuItem>
               <MenuItem value="done">Done</MenuItem>
             </StyledTextField>
+
+            <StyledTextField
+              select
+              label="Priority"
+              value={priority}
+              onChange={(e) =>
+                setPriority(e.target.value as "low" | "medium" | "high")
+              }
+              fullWidth
+              disabled={loading}
+            >
+              <MenuItem value="low">Low</MenuItem>
+              <MenuItem value="medium">Medium</MenuItem>
+              <MenuItem value="high">High</MenuItem>
+            </StyledTextField>
+
+            {/* Due Date & Time */}
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  color: "#475569",
+                  mb: 1,
+                }}
+              >
+                Due Date
+              </Typography>
+              <Box sx={{ display: "flex", gap: 1.5 }}>
+                <StyledTextField
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  fullWidth
+                  disabled={loading}
+                />
+                <StyledTextField
+                  type="time"
+                  value={dueTime}
+                  onChange={(e) => setDueTime(e.target.value)}
+                  sx={{ minWidth: "160px" }}
+                  disabled={loading}
+                  label="Time (Optional)"
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+              </Box>
+            </Box>
           </Box>
         </DialogContent>
 

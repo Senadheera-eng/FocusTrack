@@ -15,6 +15,9 @@ export class Task {
   @Column({ default: 'todo' })
   status: 'todo' | 'in_progress' | 'done';
 
+  @Column({ default: 'medium' })
+  priority: 'low' | 'medium' | 'high';
+
   @ManyToOne(() => User, user => user.tasks, { onDelete: 'CASCADE' })
   user: User;
 
@@ -26,6 +29,9 @@ export class Task {
 
   @Column({ nullable: true })
   completedAt?: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  dueDate?: Date;
 }
 
 export default Task;

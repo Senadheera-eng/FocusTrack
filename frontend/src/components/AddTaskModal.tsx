@@ -11,6 +11,7 @@ import {
   MenuItem,
   CircularProgress,
   Alert,
+  Typography,
 } from "@mui/material";
 import { Close as CloseIcon } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
@@ -67,7 +68,9 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
 }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [status, setStatus] = useState<"todo" | "in_progress" | "done">("todo");
+  const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
+  const [dueDate, setDueDate] = useState("");
+  const [dueTime, setDueTime] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [titleError, setTitleError] = useState("");
@@ -92,19 +95,32 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
       return;
     }
 
+    if (!dueDate) {
+      setError("Due date is required");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
     try {
+      // Build the due date ISO string
+      const dueDateISO = dueTime
+        ? new Date(`${dueDate}T${dueTime}`).toISOString()
+        : new Date(`${dueDate}T00:00:00`).toISOString();
+
       await axios.post("http://localhost:4000/tasks", {
         title: title.trim(),
         description: description.trim() || undefined,
-        status,
+        priority,
+        dueDate: dueDateISO,
       });
 
       setTitle("");
       setDescription("");
-      setStatus("todo");
+      setPriority("medium");
+      setDueDate("");
+      setDueTime("");
       onTaskAdded();
       onClose();
     } catch (err: any) {
@@ -118,12 +134,17 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
     if (!loading) {
       setTitle("");
       setDescription("");
-      setStatus("todo");
+      setPriority("medium");
+      setDueDate("");
+      setDueTime("");
       setError("");
       setTitleError("");
       onClose();
     }
   };
+
+  // Get today's date in YYYY-MM-DD format for min date
+  const today = new Date().toISOString().split("T")[0];
 
   return (
     <StyledDialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
@@ -197,7 +218,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               multiline
-              rows={4}
+              rows={3}
               fullWidth
               disabled={loading}
               helperText={`${description.length}/1000 characters`}
@@ -206,18 +227,52 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
 
             <StyledTextField
               select
-              label="Status"
-              value={status}
+              label="Priority"
+              value={priority}
               onChange={(e) =>
-                setStatus(e.target.value as "todo" | "in_progress" | "done")
+                setPriority(e.target.value as "low" | "medium" | "high")
               }
               fullWidth
               disabled={loading}
             >
-              <MenuItem value="todo">To Do</MenuItem>
-              <MenuItem value="in_progress">In Progress</MenuItem>
-              <MenuItem value="done">Done</MenuItem>
+              <MenuItem value="low">Low</MenuItem>
+              <MenuItem value="medium">Medium</MenuItem>
+              <MenuItem value="high">High</MenuItem>
             </StyledTextField>
+
+            {/* Due Date & Time */}
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  color: "#475569",
+                  mb: 1,
+                }}
+              >
+                Due Date *
+              </Typography>
+              <Box sx={{ display: "flex", gap: 1.5 }}>
+                <StyledTextField
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  fullWidth
+                  disabled={loading}
+                  required
+                  slotProps={{ htmlInput: { min: today } }}
+                />
+                <StyledTextField
+                  type="time"
+                  value={dueTime}
+                  onChange={(e) => setDueTime(e.target.value)}
+                  sx={{ minWidth: "160px" }}
+                  disabled={loading}
+                  label="Time (Optional)"
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+              </Box>
+            </Box>
           </Box>
         </DialogContent>
 
@@ -241,7 +296,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = ({
           <Button
             type="submit"
             variant="contained"
-            disabled={loading || !title.trim()}
+            disabled={loading || !title.trim() || !dueDate}
             sx={{
               borderRadius: "12px",
               padding: "10px 28px",

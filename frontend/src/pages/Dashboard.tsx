@@ -7,6 +7,9 @@ import {
   Button,
   Alert,
   IconButton,
+  Badge,
+  Popover,
+  Chip,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
@@ -15,12 +18,18 @@ import {
   Assignment,
   CheckCircle,
   TrendingUp,
-  AccessTime,
   Menu as MenuIcon,
   Today,
-  DateRange,
-  LocalFireDepartment,
-  Schedule,
+  Search as SearchIcon,
+  Close as CloseIcon,
+  FileDownload as ExportIcon,
+  NotificationsNone as BellIcon,
+  AccessTime as ClockIcon,
+  ArrowDownward,
+  ArrowUpward,
+  CalendarMonth,
+  PriorityHigh,
+  SortByAlpha,
 } from "@mui/icons-material";
 import { styled, keyframes } from "@mui/material/styles";
 
@@ -38,21 +47,11 @@ interface Task {
   title: string;
   description?: string;
   status: "todo" | "in_progress" | "done";
+  priority: "low" | "medium" | "high";
   createdAt: string;
   updatedAt: string;
   completedAt?: string;
-}
-
-interface ProductivityStats {
-  completedToday: number;
-  completedThisWeek: number;
-  hoursTrackedToday: number;
-  hoursTrackedThisWeek: number;
-  totalTasks: number;
-  totalCompleted: number;
-  totalInProgress: number;
-  totalTodo: number;
-  streakDays: number;
+  dueDate?: string;
 }
 
 // ======================== ANIMATIONS ========================
@@ -107,6 +106,49 @@ const FilterChip = styled(Box, {
       }),
 }));
 
+const SortChip = styled(Box, {
+  shouldForwardProp: (prop) => prop !== "active",
+})<{ active?: boolean }>(({ active }) => ({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "6px",
+  padding: "6px 14px",
+  borderRadius: "10px",
+  fontSize: "12.5px",
+  fontWeight: 600,
+  cursor: "pointer",
+  transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+  whiteSpace: "nowrap" as const,
+  userSelect: "none" as const,
+  ...(active
+    ? {
+        background: "linear-gradient(135deg, #00d4d4 0%, #0891b2 100%)",
+        color: "white",
+        boxShadow: "0 3px 10px rgba(0, 212, 212, 0.25)",
+      }
+    : {
+        background: "rgba(0, 0, 0, 0.04)",
+        color: "#94a3b8",
+        border: "1px solid transparent",
+        "&:hover": {
+          background: "rgba(8, 145, 178, 0.06)",
+          color: "#0891b2",
+        },
+      }),
+}));
+
+// ======================== SORT OPTIONS ========================
+
+type SortKey = "newest" | "oldest" | "dueDate" | "priority" | "title";
+
+const SORT_OPTIONS: { key: SortKey; label: string; icon: React.ElementType }[] = [
+  { key: "newest", label: "Newest", icon: ArrowDownward },
+  { key: "oldest", label: "Oldest", icon: ArrowUpward },
+  { key: "dueDate", label: "Due Date", icon: CalendarMonth },
+  { key: "priority", label: "Priority", icon: PriorityHigh },
+  { key: "title", label: "A-Z", icon: SortByAlpha },
+];
+
 // ======================== HELPERS ========================
 
 const getEmailFromToken = (): string => {
@@ -127,14 +169,6 @@ const getGreeting = (): string => {
   return "Good evening";
 };
 
-const formatHours = (hours: number): string => {
-  if (hours < 0.01) return "0m";
-  if (hours < 1) return `${Math.round(hours * 60)}m`;
-  const h = Math.floor(hours);
-  const m = Math.round((hours - h) * 60);
-  return m > 0 ? `${h}h ${m}m` : `${h}h`;
-};
-
 // ======================== COMPONENT ========================
 
 const Dashboard: React.FC = () => {
@@ -146,8 +180,10 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "todo" | "in_progress" | "done">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<SortKey>("newest");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [prodStats, setProdStats] = useState<ProductivityStats | null>(null);
+  const [bellAnchor, setBellAnchor] = useState<HTMLElement | null>(null);
 
   // Modal states
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -158,7 +194,6 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     fetchTasks();
-    fetchProductivityStats();
   }, [state.isAuthenticated]);
 
   const fetchTasks = async () => {
@@ -174,16 +209,6 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const fetchProductivityStats = async () => {
-    if (!state.isAuthenticated) return;
-    try {
-      const res = await axios.get("http://localhost:4000/time-entries/productivity-stats");
-      setProdStats(res.data);
-    } catch {
-      // Stats are non-critical, fail silently
-    }
-  };
-
   const handleMarkComplete = async (id: string) => {
     try {
       await axios.patch(`http://localhost:4000/tasks/${id}`, {
@@ -196,7 +221,6 @@ const Dashboard: React.FC = () => {
             : t,
         ),
       );
-      fetchProductivityStats();
     } catch {
       alert("Failed to update task");
     }
@@ -208,7 +232,6 @@ const Dashboard: React.FC = () => {
     try {
       await axios.delete(`http://localhost:4000/tasks/${id}`);
       setTasks(tasks.filter((t) => t.id !== id));
-      fetchProductivityStats();
     } catch {
       alert("Failed to delete task");
     }
@@ -223,6 +246,28 @@ const Dashboard: React.FC = () => {
     setEditModalOpen(true);
   };
 
+  const handleExportCSV = () => {
+    if (tasks.length === 0) return;
+    const headers = ["Title", "Description", "Status", "Priority", "Due Date", "Created At", "Completed At"];
+    const rows = tasks.map((t) => [
+      `"${t.title.replace(/"/g, '""')}"`,
+      `"${(t.description || "").replace(/"/g, '""')}"`,
+      t.status,
+      t.priority,
+      t.dueDate ? new Date(t.dueDate).toLocaleString() : "",
+      new Date(t.createdAt).toLocaleString(),
+      t.completedAt ? new Date(t.completedAt).toLocaleString() : "",
+    ]);
+    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `focustrack-tasks-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Calculate stats
   const stats = {
     total: tasks.length,
@@ -231,9 +276,48 @@ const Dashboard: React.FC = () => {
     todo: tasks.filter((t) => t.status === "todo").length,
   };
 
-  // Filtered tasks
-  const filteredTasks =
-    filter === "all" ? tasks : tasks.filter((t) => t.status === filter);
+  // Reminders: overdue + due today
+  const reminders = tasks.filter((t) => {
+    if (t.status === "done" || !t.dueDate) return false;
+    const now = new Date();
+    const due = new Date(t.dueDate);
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    return due <= todayEnd;
+  });
+
+  // Filtered and sorted tasks
+  const filteredTasks = tasks
+    .filter((t) => {
+      const matchesFilter = filter === "all" || t.status === filter;
+      const query = searchQuery.toLowerCase().trim();
+      const matchesSearch =
+        !query ||
+        t.title.toLowerCase().includes(query) ||
+        (t.description && t.description.toLowerCase().includes(query));
+      return matchesFilter && matchesSearch;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "oldest":
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case "dueDate": {
+          // Tasks with due dates first, sorted ascending; tasks without due dates last
+          if (!a.dueDate && !b.dueDate) return 0;
+          if (!a.dueDate) return 1;
+          if (!b.dueDate) return -1;
+          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        }
+        case "priority": {
+          const order = { high: 0, medium: 1, low: 2 };
+          return order[a.priority] - order[b.priority];
+        }
+        case "title":
+          return a.title.localeCompare(b.title);
+        case "newest":
+        default:
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+    });
 
   if (!state.isAuthenticated) {
     return (
@@ -309,90 +393,191 @@ const Dashboard: React.FC = () => {
 
         {/* Content Area */}
         <Box sx={{ p: { xs: 2.5, sm: 3, md: 4, lg: 5 }, maxWidth: "1400px" }}>
-          {/* Greeting */}
+          {/* Row 1: Greeting + Export/Bell */}
           <Box
             sx={{
               mb: 4,
               animation: `${fadeInUp} 0.5s ease-out`,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
             }}
           >
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 800,
-                color: "#0f172a",
-                mb: 0.5,
-                fontSize: { xs: "1.5rem", md: "2rem" },
-                letterSpacing: "-0.5px",
-              }}
-            >
-              {getGreeting()},{" "}
-              <Box
-                component="span"
+            <Box>
+              <Typography
+                variant="h4"
                 sx={{
-                  background: "linear-gradient(135deg, #00d4d4, #0891b2)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
+                  fontWeight: 800,
+                  color: "#0f172a",
+                  mb: 0.5,
+                  fontSize: { xs: "1.5rem", md: "2rem" },
+                  letterSpacing: "-0.5px",
                 }}
               >
-                {userEmail ? userEmail.split("@")[0] : "User"}
-              </Box>
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{ color: "#64748b", fontSize: "15px" }}
-            >
-              Here's what's happening with your tasks today
-            </Typography>
+                {getGreeting()},{" "}
+                <Box
+                  component="span"
+                  sx={{
+                    background: "linear-gradient(135deg, #00d4d4, #0891b2)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}
+                >
+                  {userEmail ? userEmail.split("@")[0] : "User"}
+                </Box>
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{ color: "#64748b", fontSize: "15px" }}
+              >
+                Here's what's happening with your tasks today
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              {/* Export Button */}
+              <IconButton
+                onClick={handleExportCSV}
+                disabled={tasks.length === 0}
+                sx={{
+                  color: "#64748b",
+                  border: "1px solid rgba(0, 0, 0, 0.08)",
+                  borderRadius: "12px",
+                  width: 44,
+                  height: 44,
+                  background: "rgba(255, 255, 255, 0.7)",
+                  backdropFilter: "blur(8px)",
+                  transition: "all 0.3s ease",
+                  "&:hover": {
+                    color: "#0891b2",
+                    borderColor: "#0891b2",
+                    background: "rgba(8, 145, 178, 0.06)",
+                  },
+                }}
+                title="Export CSV"
+              >
+                <ExportIcon sx={{ fontSize: 20 }} />
+              </IconButton>
+
+              {/* Notification Bell */}
+              <IconButton
+                onClick={(e) => setBellAnchor(bellAnchor ? null : e.currentTarget)}
+                sx={{
+                  color: reminders.length > 0 ? "#f59e0b" : "#94a3b8",
+                  border: "1px solid rgba(0, 0, 0, 0.08)",
+                  borderRadius: "12px",
+                  width: 44,
+                  height: 44,
+                  background: "rgba(255, 255, 255, 0.7)",
+                  backdropFilter: "blur(8px)",
+                  transition: "all 0.3s ease",
+                  "&:hover": {
+                    borderColor: "#0891b2",
+                    color: "#0891b2",
+                  },
+                }}
+              >
+                <Badge
+                  badgeContent={reminders.length}
+                  color="error"
+                  sx={{
+                    "& .MuiBadge-badge": {
+                      fontSize: "10px",
+                      height: "18px",
+                      minWidth: "18px",
+                    },
+                  }}
+                >
+                  <BellIcon sx={{ fontSize: 22 }} />
+                </Badge>
+              </IconButton>
+
+              <Popover
+                open={Boolean(bellAnchor)}
+                anchorEl={bellAnchor}
+                onClose={() => setBellAnchor(null)}
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                transformOrigin={{ vertical: "top", horizontal: "right" }}
+                slotProps={{
+                  paper: {
+                    sx: {
+                      borderRadius: "16px",
+                      boxShadow: "0 12px 32px rgba(0,0,0,0.12)",
+                      border: "1px solid rgba(255,255,255,0.8)",
+                      backdropFilter: "blur(20px)",
+                      background: "rgba(255,255,255,0.95)",
+                      width: 340,
+                      maxHeight: 400,
+                      overflow: "auto",
+                      mt: 1,
+                    },
+                  },
+                }}
+              >
+                <Box sx={{ p: 2.5 }}>
+                  <Typography sx={{ fontWeight: 700, color: "#0f172a", fontSize: "15px", mb: 2 }}>
+                    Reminders ({reminders.length})
+                  </Typography>
+                  {reminders.length === 0 ? (
+                    <Typography sx={{ color: "#94a3b8", fontSize: "13px", textAlign: "center", py: 3 }}>
+                      No pending reminders
+                    </Typography>
+                  ) : (
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                      {reminders.map((t) => {
+                        const isOverdue = new Date(t.dueDate!) < new Date(new Date().toDateString());
+                        return (
+                          <Box
+                            key={t.id}
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1.5,
+                              px: 2,
+                              py: 1.5,
+                              borderRadius: "12px",
+                              background: "rgba(248, 250, 252, 0.6)",
+                              borderLeft: `3px solid ${isOverdue ? "#ef4444" : "#f59e0b"}`,
+                            }}
+                          >
+                            <ClockIcon sx={{ fontSize: 16, color: isOverdue ? "#ef4444" : "#f59e0b" }} />
+                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Typography
+                                sx={{
+                                  fontSize: "13px",
+                                  fontWeight: 600,
+                                  color: "#0f172a",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                {t.title}
+                              </Typography>
+                            </Box>
+                            <Chip
+                              label={isOverdue ? "Overdue" : "Today"}
+                              size="small"
+                              sx={{
+                                fontWeight: 700,
+                                fontSize: "9px",
+                                height: "20px",
+                                color: isOverdue ? "#ef4444" : "#f59e0b",
+                                backgroundColor: isOverdue ? "rgba(239,68,68,0.08)" : "rgba(245,158,11,0.08)",
+                                "& .MuiChip-label": { px: 0.75 },
+                              }}
+                            />
+                          </Box>
+                        );
+                      })}
+                    </Box>
+                  )}
+                </Box>
+              </Popover>
+            </Box>
           </Box>
 
-          {/* Productivity Stats */}
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "repeat(2, 1fr)",
-                sm: "repeat(2, 1fr)",
-                md: "repeat(4, 1fr)",
-              },
-              gap: { xs: 2, md: 3 },
-              mb: 3,
-              animation: `${fadeInUp} 0.5s ease-out`,
-              animationDelay: "0.1s",
-              animationFillMode: "both",
-            }}
-          >
-            <StatsCard
-              icon={Today}
-              value={prodStats?.completedToday ?? 0}
-              label="Completed Today"
-              color="#10b981"
-              bgColor="rgba(16, 185, 129, 0.1)"
-            />
-            <StatsCard
-              icon={DateRange}
-              value={prodStats?.completedThisWeek ?? 0}
-              label="Completed This Week"
-              color="#0891b2"
-              bgColor="rgba(8, 145, 178, 0.1)"
-            />
-            <StatsCard
-              icon={Schedule}
-              value={formatHours(prodStats?.hoursTrackedToday ?? 0)}
-              label="Hours Today"
-              color="#f59e0b"
-              bgColor="rgba(245, 158, 11, 0.1)"
-            />
-            <StatsCard
-              icon={AccessTime}
-              value={formatHours(prodStats?.hoursTrackedThisWeek ?? 0)}
-              label="Hours This Week"
-              color="#8b5cf6"
-              bgColor="rgba(139, 92, 246, 0.1)"
-            />
-          </Box>
-
-          {/* Task Overview Stats */}
+          {/* Stats Row - 4 cards */}
           <Box
             sx={{
               display: "grid",
@@ -403,7 +588,7 @@ const Dashboard: React.FC = () => {
               gap: { xs: 2, md: 3 },
               mb: 4,
               animation: `${fadeInUp} 0.5s ease-out`,
-              animationDelay: "0.15s",
+              animationDelay: "0.1s",
               animationFillMode: "both",
             }}
           >
@@ -415,11 +600,11 @@ const Dashboard: React.FC = () => {
               bgColor="rgba(8, 145, 178, 0.1)"
             />
             <StatsCard
-              icon={CheckCircle}
-              value={stats.completed}
-              label="Completed"
-              color="#10b981"
-              bgColor="rgba(16, 185, 129, 0.1)"
+              icon={Today}
+              value={stats.todo}
+              label="To Do"
+              color="#8b5cf6"
+              bgColor="rgba(139, 92, 246, 0.1)"
             />
             <StatsCard
               icon={TrendingUp}
@@ -428,26 +613,16 @@ const Dashboard: React.FC = () => {
               color="#f59e0b"
               bgColor="rgba(245, 158, 11, 0.1)"
             />
-            {prodStats && prodStats.streakDays > 0 ? (
-              <StatsCard
-                icon={LocalFireDepartment}
-                value={`${prodStats.streakDays}d`}
-                label="Streak"
-                color="#ef4444"
-                bgColor="rgba(239, 68, 68, 0.1)"
-              />
-            ) : (
-              <StatsCard
-                icon={AccessTime}
-                value={stats.todo}
-                label="To Do"
-                color="#8b5cf6"
-                bgColor="rgba(139, 92, 246, 0.1)"
-              />
-            )}
+            <StatsCard
+              icon={CheckCircle}
+              value={stats.completed}
+              label="Completed"
+              color="#10b981"
+              bgColor="rgba(16, 185, 129, 0.1)"
+            />
           </Box>
 
-          {/* Tasks Header + Filters */}
+          {/* Toolbar Row 1: Title + Search + Add */}
           <Box
             sx={{
               display: "flex",
@@ -455,19 +630,90 @@ const Dashboard: React.FC = () => {
               justifyContent: "space-between",
               alignItems: { xs: "stretch", sm: "center" },
               gap: 2,
-              mb: 3,
+              mb: 2,
               animation: `${fadeInUp} 0.5s ease-out`,
-              animationDelay: "0.2s",
+              animationDelay: "0.15s",
               animationFillMode: "both",
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
-              <Typography
-                variant="h6"
-                sx={{ fontWeight: 700, color: "#0f172a", mr: 1 }}
+            <Typography
+              variant="h6"
+              sx={{ fontWeight: 700, color: "#0f172a" }}
+            >
+              Tasks
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              {/* Search */}
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  background: "rgba(255, 255, 255, 0.7)",
+                  backdropFilter: "blur(8px)",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(0, 0, 0, 0.08)",
+                  px: 1.5,
+                  py: 0.5,
+                  transition: "all 0.3s ease",
+                  "&:focus-within": {
+                    borderColor: "#0891b2",
+                    boxShadow: "0 2px 12px rgba(8, 145, 178, 0.1)",
+                    background: "rgba(255, 255, 255, 0.95)",
+                  },
+                }}
               >
-                Tasks
-              </Typography>
+                <SearchIcon sx={{ color: "#94a3b8", fontSize: 20, mr: 1 }} />
+                <input
+                  type="text"
+                  placeholder="Search tasks..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    border: "none",
+                    outline: "none",
+                    background: "transparent",
+                    fontSize: "13.5px",
+                    color: "#0f172a",
+                    width: "160px",
+                    fontFamily: "inherit",
+                  }}
+                />
+                {searchQuery && (
+                  <IconButton
+                    size="small"
+                    onClick={() => setSearchQuery("")}
+                    sx={{ color: "#94a3b8", p: 0.25, "&:hover": { color: "#64748b" } }}
+                  >
+                    <CloseIcon sx={{ fontSize: 16 }} />
+                  </IconButton>
+                )}
+              </Box>
+              <AddTaskButton
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={handleAddTask}
+              >
+                Add Task
+              </AddTaskButton>
+            </Box>
+          </Box>
+
+          {/* Toolbar Row 2: Filters + Sort Chips */}
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              justifyContent: "space-between",
+              alignItems: { xs: "flex-start", sm: "center" },
+              gap: 2,
+              mb: 3,
+              animation: `${fadeInUp} 0.5s ease-out`,
+              animationDelay: "0.18s",
+              animationFillMode: "both",
+            }}
+          >
+            {/* Filter Chips */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
               <FilterChip
                 selected={filter === "all"}
                 onClick={() => setFilter("all")}
@@ -493,13 +739,32 @@ const Dashboard: React.FC = () => {
                 Done ({stats.completed})
               </FilterChip>
             </Box>
-            <AddTaskButton
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleAddTask}
-            >
-              Add Task
-            </AddTaskButton>
+
+            {/* Sort Chips */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
+              <Typography
+                sx={{
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  color: "#94a3b8",
+                  letterSpacing: "0.5px",
+                  textTransform: "uppercase",
+                  mr: 0.5,
+                }}
+              >
+                Sort
+              </Typography>
+              {SORT_OPTIONS.map((opt) => (
+                <SortChip
+                  key={opt.key}
+                  active={sortBy === opt.key}
+                  onClick={() => setSortBy(opt.key)}
+                >
+                  <opt.icon sx={{ fontSize: 14 }} />
+                  {opt.label}
+                </SortChip>
+              ))}
+            </Box>
           </Box>
 
           {/* Error Alert */}
@@ -523,7 +788,7 @@ const Dashboard: React.FC = () => {
           {loading ? (
             <LoadingState />
           ) : filteredTasks.length === 0 ? (
-            filter === "all" ? (
+            filter === "all" && !searchQuery ? (
               <EmptyState onAddTask={handleAddTask} />
             ) : (
               <Box
@@ -537,13 +802,13 @@ const Dashboard: React.FC = () => {
                   variant="h6"
                   sx={{ color: "#94a3b8", fontWeight: 600 }}
                 >
-                  No tasks in this category
+                  {searchQuery ? "No tasks match your search" : "No tasks in this category"}
                 </Typography>
                 <Typography
                   variant="body2"
                   sx={{ color: "#cbd5e1", mt: 1 }}
                 >
-                  Try selecting a different filter
+                  {searchQuery ? "Try a different search term" : "Try selecting a different filter"}
                 </Typography>
               </Box>
             )
@@ -585,7 +850,7 @@ const Dashboard: React.FC = () => {
       <AddTaskModal
         open={addModalOpen}
         onClose={() => setAddModalOpen(false)}
-        onTaskAdded={() => { fetchTasks(); fetchProductivityStats(); }}
+        onTaskAdded={() => { fetchTasks();}}
       />
       <EditTaskModal
         open={editModalOpen}
@@ -594,7 +859,7 @@ const Dashboard: React.FC = () => {
           setEditModalOpen(false);
           setTaskToEdit(null);
         }}
-        onTaskUpdated={() => { fetchTasks(); fetchProductivityStats(); }}
+        onTaskUpdated={() => { fetchTasks();}}
       />
     </Box>
   );

@@ -2,6 +2,9 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import AuthForm from "./components/AuthForm";
 import Dashboard from "./pages/Dashboard";
+import MyTasksPage from "./pages/MyTasksPage";
+import AnalyticsPage from "./pages/AnalyticsPage";
+import SettingsPage from "./pages/SettingsPage";
 import { useAuth } from "./context/AuthContext";
 import type { JSX } from "react";
 
@@ -22,12 +25,37 @@ function App() {
       {/* Register */}
       <Route path="/register" element={<AuthForm isLogin={false} />} />
 
-      {/* Protected Dashboard – only this one */}
+      {/* Protected pages */}
       <Route
         path="/dashboard"
         element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/my-tasks"
+        element={
+          <ProtectedRoute>
+            <MyTasksPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/analytics"
+        element={
+          <ProtectedRoute>
+            <AnalyticsPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <SettingsPage />
           </ProtectedRoute>
         }
       />
