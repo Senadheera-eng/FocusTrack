@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsEnum, MaxLength } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsEnum, MaxLength, IsDateString } from 'class-validator';
 
 export class CreateTaskDto {
   @IsString()
@@ -18,4 +18,8 @@ export class CreateTaskDto {
   @IsEnum(['low', 'medium', 'high'], { message: 'Priority must be low, medium, or high' })
   @IsOptional()
   priority?: 'low' | 'medium' | 'high';
+
+  @IsDateString({}, { message: 'Due date must be a valid ISO date string' })
+  @IsOptional()
+  dueDate?: string;
 }

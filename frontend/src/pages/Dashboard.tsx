@@ -7,6 +7,9 @@ import {
   Button,
   Alert,
   IconButton,
+  Badge,
+  Popover,
+  Chip,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
@@ -25,6 +28,8 @@ import {
   Close as CloseIcon,
   SwapVert as SortIcon,
   FileDownload as ExportIcon,
+  NotificationsNone as BellIcon,
+  AccessTime as ClockIcon,
 } from "@mui/icons-material";
 import { styled, keyframes } from "@mui/material/styles";
 
@@ -36,7 +41,6 @@ import EmptyState from "../components/EmptyState";
 import LoadingState from "../components/LoadingState";
 import AddTaskModal from "../components/AddTaskModal";
 import EditTaskModal from "../components/EditTaskModal";
-import ProductivityCharts from "../components/ProductivityCharts";
 
 interface Task {
   id: string;
@@ -47,6 +51,7 @@ interface Task {
   createdAt: string;
   updatedAt: string;
   completedAt?: string;
+  dueDate?: string;
 }
 
 interface ProductivityStats {
@@ -156,6 +161,7 @@ const Dashboard: React.FC = () => {
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "priority" | "title">("newest");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [prodStats, setProdStats] = useState<ProductivityStats | null>(null);
+  const [bellAnchor, setBellAnchor] = useState<HTMLElement | null>(null);
 
   // Modal states
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -233,12 +239,13 @@ const Dashboard: React.FC = () => {
 
   const handleExportCSV = () => {
     if (tasks.length === 0) return;
-    const headers = ["Title", "Description", "Status", "Priority", "Created At", "Completed At"];
+    const headers = ["Title", "Description", "Status", "Priority", "Due Date", "Created At", "Completed At"];
     const rows = tasks.map((t) => [
       `"${t.title.replace(/"/g, '""')}"`,
       `"${(t.description || "").replace(/"/g, '""')}"`,
       t.status,
       t.priority,
+      t.dueDate ? new Date(t.dueDate).toLocaleString() : "",
       new Date(t.createdAt).toLocaleString(),
       t.completedAt ? new Date(t.completedAt).toLocaleString() : "",
     ]);
@@ -259,6 +266,15 @@ const Dashboard: React.FC = () => {
     inProgress: tasks.filter((t) => t.status === "in_progress").length,
     todo: tasks.filter((t) => t.status === "todo").length,
   };
+
+  // Reminders: overdue + due today
+  const reminders = tasks.filter((t) => {
+    if (t.status === "done" || !t.dueDate) return false;
+    const now = new Date();
+    const due = new Date(t.dueDate);
+    const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    return due <= todayEnd;
+  });
 
   // Filtered and sorted tasks
   const filteredTasks = tasks
@@ -361,41 +377,163 @@ const Dashboard: React.FC = () => {
 
         {/* Content Area */}
         <Box sx={{ p: { xs: 2.5, sm: 3, md: 4, lg: 5 }, maxWidth: "1400px" }}>
-          {/* Greeting */}
+          {/* Greeting + Notification Bell */}
           <Box
             sx={{
               mb: 4,
               animation: `${fadeInUp} 0.5s ease-out`,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
             }}
           >
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 800,
-                color: "#0f172a",
-                mb: 0.5,
-                fontSize: { xs: "1.5rem", md: "2rem" },
-                letterSpacing: "-0.5px",
-              }}
-            >
-              {getGreeting()},{" "}
-              <Box
-                component="span"
+            <Box>
+              <Typography
+                variant="h4"
                 sx={{
-                  background: "linear-gradient(135deg, #00d4d4, #0891b2)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
+                  fontWeight: 800,
+                  color: "#0f172a",
+                  mb: 0.5,
+                  fontSize: { xs: "1.5rem", md: "2rem" },
+                  letterSpacing: "-0.5px",
                 }}
               >
-                {userEmail ? userEmail.split("@")[0] : "User"}
-              </Box>
-            </Typography>
-            <Typography
-              variant="body1"
-              sx={{ color: "#64748b", fontSize: "15px" }}
+                {getGreeting()},{" "}
+                <Box
+                  component="span"
+                  sx={{
+                    background: "linear-gradient(135deg, #00d4d4, #0891b2)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}
+                >
+                  {userEmail ? userEmail.split("@")[0] : "User"}
+                </Box>
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{ color: "#64748b", fontSize: "15px" }}
+              >
+                Here's what's happening with your tasks today
+              </Typography>
+            </Box>
+
+            {/* Notification Bell */}
+            <IconButton
+              onClick={(e) => setBellAnchor(bellAnchor ? null : e.currentTarget)}
+              sx={{
+                mt: 0.5,
+                color: reminders.length > 0 ? "#f59e0b" : "#94a3b8",
+                border: "1px solid rgba(0, 0, 0, 0.08)",
+                borderRadius: "12px",
+                width: 44,
+                height: 44,
+                background: "rgba(255, 255, 255, 0.7)",
+                backdropFilter: "blur(8px)",
+                transition: "all 0.3s ease",
+                "&:hover": {
+                  borderColor: "#0891b2",
+                  color: "#0891b2",
+                },
+              }}
             >
-              Here's what's happening with your tasks today
-            </Typography>
+              <Badge
+                badgeContent={reminders.length}
+                color="error"
+                sx={{
+                  "& .MuiBadge-badge": {
+                    fontSize: "10px",
+                    height: "18px",
+                    minWidth: "18px",
+                  },
+                }}
+              >
+                <BellIcon sx={{ fontSize: 22 }} />
+              </Badge>
+            </IconButton>
+
+            <Popover
+              open={Boolean(bellAnchor)}
+              anchorEl={bellAnchor}
+              onClose={() => setBellAnchor(null)}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
+              slotProps={{
+                paper: {
+                  sx: {
+                    borderRadius: "16px",
+                    boxShadow: "0 12px 32px rgba(0,0,0,0.12)",
+                    border: "1px solid rgba(255,255,255,0.8)",
+                    backdropFilter: "blur(20px)",
+                    background: "rgba(255,255,255,0.95)",
+                    width: 340,
+                    maxHeight: 400,
+                    overflow: "auto",
+                    mt: 1,
+                  },
+                },
+              }}
+            >
+              <Box sx={{ p: 2.5 }}>
+                <Typography sx={{ fontWeight: 700, color: "#0f172a", fontSize: "15px", mb: 2 }}>
+                  Reminders ({reminders.length})
+                </Typography>
+                {reminders.length === 0 ? (
+                  <Typography sx={{ color: "#94a3b8", fontSize: "13px", textAlign: "center", py: 3 }}>
+                    No pending reminders
+                  </Typography>
+                ) : (
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    {reminders.map((t) => {
+                      const isOverdue = new Date(t.dueDate!) < new Date(new Date().toDateString());
+                      return (
+                        <Box
+                          key={t.id}
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1.5,
+                            px: 2,
+                            py: 1.5,
+                            borderRadius: "12px",
+                            background: "rgba(248, 250, 252, 0.6)",
+                            borderLeft: `3px solid ${isOverdue ? "#ef4444" : "#f59e0b"}`,
+                          }}
+                        >
+                          <ClockIcon sx={{ fontSize: 16, color: isOverdue ? "#ef4444" : "#f59e0b" }} />
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography
+                              sx={{
+                                fontSize: "13px",
+                                fontWeight: 600,
+                                color: "#0f172a",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {t.title}
+                            </Typography>
+                          </Box>
+                          <Chip
+                            label={isOverdue ? "Overdue" : "Today"}
+                            size="small"
+                            sx={{
+                              fontWeight: 700,
+                              fontSize: "9px",
+                              height: "20px",
+                              color: isOverdue ? "#ef4444" : "#f59e0b",
+                              backgroundColor: isOverdue ? "rgba(239,68,68,0.08)" : "rgba(245,158,11,0.08)",
+                              "& .MuiChip-label": { px: 0.75 },
+                            }}
+                          />
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                )}
+              </Box>
+            </Popover>
           </Box>
 
           {/* Productivity Stats */}
@@ -498,19 +636,6 @@ const Dashboard: React.FC = () => {
               />
             )}
           </Box>
-
-          {/* Charts */}
-          {!loading && tasks.length > 0 && (
-            <Box
-              sx={{
-                animation: `${fadeInUp} 0.5s ease-out`,
-                animationDelay: "0.2s",
-                animationFillMode: "both",
-              }}
-            >
-              <ProductivityCharts tasks={tasks} />
-            </Box>
-          )}
 
           {/* Tasks Header + Filters */}
           <Box

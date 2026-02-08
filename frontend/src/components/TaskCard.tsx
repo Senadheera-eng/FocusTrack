@@ -11,6 +11,7 @@ import {
   CheckCircle,
   Delete as DeleteIcon,
   Edit as EditIcon,
+  CalendarToday as CalendarIcon,
 } from "@mui/icons-material";
 import { format } from "date-fns";
 import Timer from "./Timer";
@@ -24,6 +25,7 @@ interface Task {
   createdAt: string;
   updatedAt: string;
   completedAt?: string;
+  dueDate?: string;
 }
 
 interface TaskCardProps {
@@ -189,11 +191,30 @@ const TaskCard: React.FC<TaskCardProps> = ({
         }}
       >
         <Stack spacing={0.5}>
+          {task.dueDate && (() => {
+            const isOverdue = task.status !== "done" && new Date(task.dueDate) < new Date();
+            return (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <CalendarIcon sx={{ fontSize: 13, color: isOverdue ? "#ef4444" : "#94a3b8" }} />
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: "11.5px",
+                    fontWeight: isOverdue ? 700 : 500,
+                    color: isOverdue ? "#ef4444" : "#64748b",
+                  }}
+                >
+                  {isOverdue ? "Overdue · " : "Due "}
+                  {format(new Date(task.dueDate), "MMM d, yyyy")}
+                </Typography>
+              </Box>
+            );
+          })()}
           <Typography
             variant="caption"
             sx={{ color: "#94a3b8", fontSize: "11.5px" }}
           >
-            {format(new Date(task.createdAt), "MMM d, yyyy")}
+            Created {format(new Date(task.createdAt), "MMM d, yyyy")}
           </Typography>
           {task.completedAt && (
             <Typography
