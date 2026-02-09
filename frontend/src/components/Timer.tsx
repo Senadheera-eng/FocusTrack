@@ -6,6 +6,7 @@ import axios from "axios";
 
 interface TimerProps {
   taskId: string;
+  taskStatus?: "todo" | "in_progress" | "done";
   onTimeUpdate?: () => void;
 }
 
@@ -14,7 +15,8 @@ const pulse = keyframes`
   50% { opacity: 0.5; }
 `;
 
-const Timer: React.FC<TimerProps> = ({ taskId, onTimeUpdate }) => {
+const Timer: React.FC<TimerProps> = ({ taskId, taskStatus, onTimeUpdate }) => {
+  const isCompleted = taskStatus === "done";
   const [isRunning, setIsRunning] = useState(false);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -22,9 +24,11 @@ const Timer: React.FC<TimerProps> = ({ taskId, onTimeUpdate }) => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    checkActiveTimer();
+    if (!isCompleted) {
+      checkActiveTimer();
+    }
     fetchTotalTime();
-  }, [taskId]);
+  }, [taskId, isCompleted]);
 
   useEffect(() => {
     let interval: number | null = null;
@@ -113,6 +117,39 @@ const Timer: React.FC<TimerProps> = ({ taskId, onTimeUpdate }) => {
       .toString()
       .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
+
+  // Completed tasks: show only total time spent (no controls)
+  if (isCompleted) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1.5,
+          p: 1.5,
+          borderRadius: "14px",
+          background: "rgba(16, 185, 129, 0.04)",
+          border: "1px solid rgba(16, 185, 129, 0.12)",
+        }}
+      >
+        <TimerIcon sx={{ color: "#10b981", fontSize: 18 }} />
+        <Typography
+          variant="body2"
+          sx={{
+            fontWeight: 700,
+            color: "#10b981",
+            fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+            fontSize: "13px",
+            letterSpacing: "0.3px",
+          }}
+        >
+          {totalSeconds > 0
+            ? `Time spent: ${formatTime(totalSeconds)}`
+            : "No time tracked"}
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>

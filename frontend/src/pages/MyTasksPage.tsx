@@ -188,9 +188,9 @@ const MyTasksPage: React.FC = () => {
               alignItems: "center",
               px: 2,
               py: 1.5,
-              background: "rgba(255, 255, 255, 0.8)",
+              background: colors.cardBg,
               backdropFilter: "blur(12px)",
-              borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
+              borderBottom: `1px solid ${colors.divider}`,
               position: "sticky",
               top: 0,
               zIndex: 100,
@@ -318,8 +318,8 @@ const MyTasksPage: React.FC = () => {
                 background: colors.cardBg,
                 backdropFilter: "blur(16px)",
                 borderRadius: "18px",
-                border: "1px solid rgba(255, 255, 255, 0.8)",
-                boxShadow: "0 4px 20px rgba(0, 0, 0, 0.04)",
+                border: `1px solid ${colors.cardBorder}`,
+                boxShadow: colors.cardShadow,
                 p: 3,
               }}
             >
@@ -415,7 +415,7 @@ const MyTasksPage: React.FC = () => {
                         "&:hover": {
                           background: isSelected
                             ? "linear-gradient(135deg, rgba(0, 212, 212, 0.15), rgba(8, 145, 178, 0.15))"
-                            : "rgba(0, 0, 0, 0.02)",
+                            : colors.hoverBg,
                         },
                       }}
                     >
@@ -427,7 +427,7 @@ const MyTasksPage: React.FC = () => {
                             ? "#0891b2"
                             : isDayToday
                               ? "#0891b2"
-                              : "#0f172a",
+                              : colors.text,
                           mb: 0.25,
                         }}
                       >
@@ -495,11 +495,11 @@ const MyTasksPage: React.FC = () => {
                           sx={{
                             p: 2,
                             borderRadius: "12px",
-                            background: "rgba(248, 250, 252, 0.6)",
+                            background: colors.hoverBg,
                             borderLeft: `3px solid ${getPriorityColor(task.priority)}`,
                             transition: "all 0.2s ease",
                             "&:hover": {
-                              background: "rgba(248, 250, 252, 0.9)",
+                              background: colors.inputBg,
                             },
                           }}
                         >
