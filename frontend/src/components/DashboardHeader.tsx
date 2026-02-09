@@ -16,6 +16,16 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) => {
   return (
     <StyledAppBar position="static" elevation={0}>
       <Toolbar>
+        <img
+          src="/favicon.svg"
+          alt="FocusTrack"
+          style={{
+            width: "32px",
+            height: "32px",
+            borderRadius: "6px",
+            marginRight: "12px",
+          }}
+        />
         <Typography
           variant="h5"
           sx={{ flexGrow: 1, fontWeight: 700, letterSpacing: "0.5px" }}

@@ -881,21 +881,15 @@ const AuthForm: React.FC<AuthFormProps> = ({ isLogin: initialIsLogin }) => {
               animation: `${floatFast} 4s ease-in-out infinite`,
             }}
           >
-            <Box
-              component="span"
-              sx={{
-                background:
-                  "linear-gradient(135deg, #fff, rgba(255,255,255,0.8))",
-                backgroundClip: "text",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                fontWeight: 900,
-                fontSize: "28px",
-                letterSpacing: "-1px",
+            <img
+              src="/focustrack-icon.svg"
+              alt="FocusTrack"
+              style={{
+                width: "56px",
+                height: "56px",
+                borderRadius: "12px",
               }}
-            >
-              FT
-            </Box>
+            />
           </Box>
 
           {/* Title */}
