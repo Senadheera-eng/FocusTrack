@@ -12,6 +12,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { useAppTheme } from "../context/ThemeContext";
 
 interface Task {
   id: string;
@@ -36,17 +37,18 @@ const PRIORITY_COLORS: Record<string, string> = {
   high: "#ef4444",
 };
 
-const cardStyle = {
-  background: "rgba(255, 255, 255, 0.7)",
-  backdropFilter: "blur(16px)",
-  borderRadius: "18px",
-  border: "1px solid rgba(255, 255, 255, 0.8)",
-  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.04)",
-  p: 3,
-  height: "100%",
-};
-
 const ProductivityCharts: React.FC<ProductivityChartsProps> = ({ tasks }) => {
+  const { colors } = useAppTheme();
+
+  const cardStyle = {
+    background: colors.cardBg,
+    backdropFilter: "blur(16px)",
+    borderRadius: "18px",
+    border: `1px solid ${colors.cardBorder}`,
+    boxShadow: colors.cardShadow,
+    p: 3,
+    height: "100%",
+  };
   // Status distribution data
   const statusData = [
     { name: "To Do", value: tasks.filter((t) => t.status === "todo").length },
@@ -75,7 +77,7 @@ const ProductivityCharts: React.FC<ProductivityChartsProps> = ({ tasks }) => {
       {/* Status Pie Chart */}
       <Box sx={cardStyle}>
         <Typography
-          sx={{ fontWeight: 700, color: "#0f172a", fontSize: "15px", mb: 2 }}
+          sx={{ fontWeight: 700, color: colors.text, fontSize: "15px", mb: 2 }}
         >
           Task Status Distribution
         </Typography>
@@ -107,12 +109,14 @@ const ProductivityCharts: React.FC<ProductivityChartsProps> = ({ tasks }) => {
                 border: "none",
                 boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                 fontSize: "13px",
+                background: colors.cardBg,
+                color: colors.text,
               }}
             />
             <Legend
               iconType="circle"
               iconSize={8}
-              wrapperStyle={{ fontSize: "12px", color: "#64748b" }}
+              wrapperStyle={{ fontSize: "12px", color: colors.textSecondary }}
             />
           </PieChart>
         </ResponsiveContainer>
@@ -121,7 +125,7 @@ const ProductivityCharts: React.FC<ProductivityChartsProps> = ({ tasks }) => {
       {/* Priority Bar Chart */}
       <Box sx={cardStyle}>
         <Typography
-          sx={{ fontWeight: 700, color: "#0f172a", fontSize: "15px", mb: 2 }}
+          sx={{ fontWeight: 700, color: colors.text, fontSize: "15px", mb: 2 }}
         >
           Tasks by Priority
         </Typography>
@@ -131,12 +135,12 @@ const ProductivityCharts: React.FC<ProductivityChartsProps> = ({ tasks }) => {
               dataKey="name"
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 12, fill: "#64748b" }}
+              tick={{ fontSize: 12, fill: colors.textSecondary }}
             />
             <YAxis
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 12, fill: "#94a3b8" }}
+              tick={{ fontSize: 12, fill: colors.textMuted }}
               allowDecimals={false}
             />
             <Tooltip
@@ -145,6 +149,8 @@ const ProductivityCharts: React.FC<ProductivityChartsProps> = ({ tasks }) => {
                 border: "none",
                 boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                 fontSize: "13px",
+                background: colors.cardBg,
+                color: colors.text,
               }}
             />
             <Bar dataKey="count" radius={[8, 8, 0, 0]}>

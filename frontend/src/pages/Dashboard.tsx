@@ -10,6 +10,10 @@ import {
   Badge,
   Popover,
   Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
@@ -98,10 +102,10 @@ const FilterChip = styled(Box, {
         boxShadow: "0 4px 14px rgba(0, 212, 212, 0.3)",
       }
     : {
-        background: "rgba(0, 0, 0, 0.04)",
-        color: "#64748b",
+        background: "rgba(128, 128, 128, 0.1)",
+        color: "inherit",
         "&:hover": {
-          background: "rgba(0, 212, 212, 0.08)",
+          background: "rgba(0, 212, 212, 0.12)",
           color: "#0891b2",
         },
       }),
@@ -128,11 +132,11 @@ const SortChip = styled(Box, {
         boxShadow: "0 3px 10px rgba(0, 212, 212, 0.25)",
       }
     : {
-        background: "rgba(0, 0, 0, 0.04)",
-        color: "#94a3b8",
+        background: "rgba(128, 128, 128, 0.1)",
+        color: "inherit",
         border: "1px solid transparent",
         "&:hover": {
-          background: "rgba(8, 145, 178, 0.06)",
+          background: "rgba(8, 145, 178, 0.12)",
           color: "#0891b2",
         },
       }),
@@ -191,6 +195,7 @@ const Dashboard: React.FC = () => {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const userEmail = getEmailFromToken();
 
@@ -228,14 +233,19 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this task?")) return;
+  const handleDeleteClick = (id: string) => {
+    setDeleteConfirmId(id);
+  };
 
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirmId) return;
     try {
-      await axios.delete(`http://localhost:4000/tasks/${id}`);
-      setTasks(tasks.filter((t) => t.id !== id));
+      await axios.delete(`http://localhost:4000/tasks/${deleteConfirmId}`);
+      setTasks(tasks.filter((t) => t.id !== deleteConfirmId));
     } catch {
-      alert("Failed to delete task");
+      setError("Failed to delete task");
+    } finally {
+      setDeleteConfirmId(null);
     }
   };
 
@@ -505,9 +515,9 @@ const Dashboard: React.FC = () => {
                     sx: {
                       borderRadius: "16px",
                       boxShadow: "0 12px 32px rgba(0,0,0,0.12)",
-                      border: "1px solid rgba(255,255,255,0.8)",
+                      border: `1px solid ${colors.cardBorder}`,
                       backdropFilter: "blur(20px)",
-                      background: "rgba(255,255,255,0.95)",
+                      background: colors.cardBg,
                       width: 340,
                       maxHeight: 400,
                       overflow: "auto",
@@ -538,7 +548,7 @@ const Dashboard: React.FC = () => {
                               px: 2,
                               py: 1.5,
                               borderRadius: "12px",
-                              background: "rgba(248, 250, 252, 0.6)",
+                              background: colors.hoverBg,
                               borderLeft: `3px solid ${isOverdue ? "#ef4444" : "#f59e0b"}`,
                             }}
                           >
@@ -624,147 +634,158 @@ const Dashboard: React.FC = () => {
             />
           </Box>
 
-          {/* Toolbar Row 1: Title + Search + Add */}
+          {/* Tasks Toolbar */}
           <Box
             sx={{
-              display: "flex",
-              flexDirection: { xs: "column", sm: "row" },
-              justifyContent: "space-between",
-              alignItems: { xs: "stretch", sm: "center" },
-              gap: 2,
-              mb: 2,
+              background: colors.cardBg,
+              backdropFilter: "blur(16px)",
+              borderRadius: "18px",
+              border: `1px solid ${colors.cardBorder}`,
+              boxShadow: colors.cardShadow,
+              p: { xs: 2, md: 3 },
+              mb: 3,
               animation: `${fadeInUp} 0.5s ease-out`,
               animationDelay: "0.15s",
               animationFillMode: "both",
             }}
           >
-            <Typography
-              variant="h6"
-              sx={{ fontWeight: 700, color: colors.text }}
+            {/* Row 1: Title + Search + Add */}
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", sm: "row" },
+                justifyContent: "space-between",
+                alignItems: { xs: "stretch", sm: "center" },
+                gap: 2,
+                mb: 2.5,
+              }}
             >
-              Tasks
-            </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              {/* Search */}
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  background: colors.inputBg,
-                  backdropFilter: "blur(8px)",
-                  borderRadius: "12px",
-                  border: `1px solid ${colors.inputBorder}`,
-                  px: 1.5,
-                  py: 0.5,
-                  transition: "all 0.3s ease",
-                  "&:focus-within": {
-                    borderColor: "#0891b2",
-                    boxShadow: "0 2px 12px rgba(8, 145, 178, 0.1)",
-                  },
-                }}
-              >
-                <SearchIcon sx={{ color: colors.textMuted, fontSize: 20, mr: 1 }} />
-                <input
-                  type="text"
-                  placeholder="Search tasks..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{
-                    border: "none",
-                    outline: "none",
-                    background: "transparent",
-                    fontSize: "13.5px",
-                    color: colors.text,
-                    width: "160px",
-                    fontFamily: "inherit",
-                  }}
-                />
-                {searchQuery && (
-                  <IconButton
-                    size="small"
-                    onClick={() => setSearchQuery("")}
-                    sx={{ color: "#94a3b8", p: 0.25, "&:hover": { color: "#64748b" } }}
-                  >
-                    <CloseIcon sx={{ fontSize: 16 }} />
-                  </IconButton>
-                )}
-              </Box>
-              <AddTaskButton
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleAddTask}
-              >
-                Add Task
-              </AddTaskButton>
-            </Box>
-          </Box>
-
-          {/* Toolbar Row 2: Filters + Sort Chips */}
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: { xs: "column", sm: "row" },
-              justifyContent: "space-between",
-              alignItems: { xs: "flex-start", sm: "center" },
-              gap: 2,
-              mb: 3,
-              animation: `${fadeInUp} 0.5s ease-out`,
-              animationDelay: "0.18s",
-              animationFillMode: "both",
-            }}
-          >
-            {/* Filter Chips */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
-              <FilterChip
-                selected={filter === "all"}
-                onClick={() => setFilter("all")}
-              >
-                All ({stats.total})
-              </FilterChip>
-              <FilterChip
-                selected={filter === "todo"}
-                onClick={() => setFilter("todo")}
-              >
-                To Do ({stats.todo})
-              </FilterChip>
-              <FilterChip
-                selected={filter === "in_progress"}
-                onClick={() => setFilter("in_progress")}
-              >
-                In Progress ({stats.inProgress})
-              </FilterChip>
-              <FilterChip
-                selected={filter === "done"}
-                onClick={() => setFilter("done")}
-              >
-                Done ({stats.completed})
-              </FilterChip>
-            </Box>
-
-            {/* Sort Chips */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
               <Typography
-                sx={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  color: "#94a3b8",
-                  letterSpacing: "0.5px",
-                  textTransform: "uppercase",
-                  mr: 0.5,
-                }}
+                variant="h6"
+                sx={{ fontWeight: 700, color: colors.text }}
               >
-                Sort
+                Tasks
               </Typography>
-              {SORT_OPTIONS.map((opt) => (
-                <SortChip
-                  key={opt.key}
-                  active={sortBy === opt.key}
-                  onClick={() => setSortBy(opt.key)}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                {/* Search */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    background: colors.inputBg,
+                    backdropFilter: "blur(8px)",
+                    borderRadius: "12px",
+                    border: `1px solid ${colors.inputBorder}`,
+                    px: 1.5,
+                    py: 0.5,
+                    transition: "all 0.3s ease",
+                    "&:focus-within": {
+                      borderColor: "#0891b2",
+                      boxShadow: "0 2px 12px rgba(8, 145, 178, 0.1)",
+                    },
+                  }}
                 >
-                  <opt.icon sx={{ fontSize: 14 }} />
-                  {opt.label}
-                </SortChip>
-              ))}
+                  <SearchIcon sx={{ color: colors.textMuted, fontSize: 20, mr: 1 }} />
+                  <input
+                    type="text"
+                    placeholder="Search tasks..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{
+                      border: "none",
+                      outline: "none",
+                      background: "transparent",
+                      fontSize: "13.5px",
+                      color: colors.text,
+                      width: "160px",
+                      fontFamily: "inherit",
+                    }}
+                  />
+                  {searchQuery && (
+                    <IconButton
+                      size="small"
+                      onClick={() => setSearchQuery("")}
+                      sx={{ color: colors.textMuted, p: 0.25, "&:hover": { color: colors.textSecondary } }}
+                    >
+                      <CloseIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  )}
+                </Box>
+                <AddTaskButton
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={handleAddTask}
+                >
+                  Add Task
+                </AddTaskButton>
+              </Box>
+            </Box>
+
+            {/* Divider */}
+            <Box sx={{ borderTop: `1px solid ${colors.divider}`, mb: 2 }} />
+
+            {/* Row 2: Filters */}
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", sm: "row" },
+                justifyContent: "space-between",
+                alignItems: { xs: "flex-start", sm: "center" },
+                gap: 2,
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap", color: colors.textSecondary }}>
+                <FilterChip
+                  selected={filter === "all"}
+                  onClick={() => setFilter("all")}
+                >
+                  All ({stats.total})
+                </FilterChip>
+                <FilterChip
+                  selected={filter === "todo"}
+                  onClick={() => setFilter("todo")}
+                >
+                  To Do ({stats.todo})
+                </FilterChip>
+                <FilterChip
+                  selected={filter === "in_progress"}
+                  onClick={() => setFilter("in_progress")}
+                >
+                  In Progress ({stats.inProgress})
+                </FilterChip>
+                <FilterChip
+                  selected={filter === "done"}
+                  onClick={() => setFilter("done")}
+                >
+                  Done ({stats.completed})
+                </FilterChip>
+              </Box>
+
+              {/* Sort Chips */}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap", color: colors.textMuted }}>
+                <Typography
+                  sx={{
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    color: colors.textMuted,
+                    letterSpacing: "0.5px",
+                    textTransform: "uppercase",
+                    mr: 0.5,
+                  }}
+                >
+                  Sort
+                </Typography>
+                {SORT_OPTIONS.map((opt) => (
+                  <SortChip
+                    key={opt.key}
+                    active={sortBy === opt.key}
+                    onClick={() => setSortBy(opt.key)}
+                  >
+                    <opt.icon sx={{ fontSize: 14 }} />
+                    {opt.label}
+                  </SortChip>
+                ))}
+              </Box>
             </Box>
           </Box>
 
@@ -837,7 +858,7 @@ const Dashboard: React.FC = () => {
                   <TaskCard
                     task={task}
                     onMarkComplete={handleMarkComplete}
-                    onDelete={handleDelete}
+                    onDelete={handleDeleteClick}
                     onEdit={handleEdit}
                   />
                 </Box>
@@ -862,6 +883,72 @@ const Dashboard: React.FC = () => {
         }}
         onTaskUpdated={() => { fetchTasks();}}
       />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={Boolean(deleteConfirmId)}
+        onClose={() => setDeleteConfirmId(null)}
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: "18px",
+              maxWidth: "400px",
+              background: colors.cardBg,
+              backdropFilter: "blur(20px)",
+              border: `1px solid ${colors.cardBorder}`,
+              boxShadow: "0 24px 48px rgba(0, 0, 0, 0.15)",
+            },
+          },
+          backdrop: {
+            sx: {
+              backdropFilter: "blur(6px)",
+              background: "rgba(15, 23, 42, 0.4)",
+            },
+          },
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: colors.text, pb: 0.5, pt: 3, px: 3 }}>
+          Delete Task
+        </DialogTitle>
+        <DialogContent sx={{ px: 3, pt: 1 }}>
+          <Typography sx={{ color: colors.textSecondary, fontSize: "14px" }}>
+            Are you sure you want to delete this task? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+          <Button
+            onClick={() => setDeleteConfirmId(null)}
+            sx={{
+              borderRadius: "12px",
+              textTransform: "none",
+              fontWeight: 600,
+              color: colors.textSecondary,
+              px: 2.5,
+              "&:hover": { background: colors.hoverBg },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            variant="contained"
+            sx={{
+              borderRadius: "12px",
+              textTransform: "none",
+              fontWeight: 700,
+              px: 2.5,
+              background: "linear-gradient(135deg, #ef4444, #dc2626)",
+              boxShadow: "0 4px 14px rgba(239, 68, 68, 0.25)",
+              "&:hover": {
+                background: "linear-gradient(135deg, #dc2626, #b91c1c)",
+                boxShadow: "0 6px 20px rgba(239, 68, 68, 0.35)",
+              },
+            }}
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
