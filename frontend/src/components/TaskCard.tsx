@@ -174,9 +174,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
         )}
       </Box>
 
-      {/* Timer */}
+      {/* Timer / Time Spent */}
       <Box sx={{ px: 3, py: 1.5, flex: 1 }}>
-        <Timer taskId={task.id} />
+        <Timer taskId={task.id} taskStatus={task.status} />
       </Box>
 
       {/* Footer */}
