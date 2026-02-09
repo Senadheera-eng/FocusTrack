@@ -26,7 +26,7 @@ import { TimeEntriesModule } from './time-entries/time-entries.module';
         password: configService.get<string>('DATABASE_PASSWORD'),
         database: configService.get<string>('DATABASE_NAME'),
         autoLoadEntities: true,
-        synchronize: configService.get<boolean>('DATABASE_SYNCHRONIZE', false),
+        synchronize: configService.get<string>('DATABASE_SYNCHRONIZE', 'false') === 'true',
         logging: ['query', 'error'],
       }),
       inject: [ConfigService],

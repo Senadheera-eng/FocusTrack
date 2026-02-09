@@ -20,6 +20,7 @@ import { keyframes } from "@mui/material/styles";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths, isSameMonth, isSameDay, isToday } from "date-fns";
 
 import Sidebar, { SIDEBAR_WIDTH } from "../components/Sidebar";
+import { useAppTheme } from "../context/ThemeContext";
 
 interface Task {
   id: string;
@@ -74,6 +75,7 @@ const MyTasksPage: React.FC = () => {
   const { state, logout } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { colors } = useAppTheme();
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -163,7 +165,7 @@ const MyTasksPage: React.FC = () => {
   }, [tasks]);
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", background: "#f8fafc" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", background: colors.bg, transition: "background 0.3s ease" }}>
       <Sidebar
         userEmail={userEmail}
         onLogout={logout}
@@ -221,7 +223,7 @@ const MyTasksPage: React.FC = () => {
               variant="h4"
               sx={{
                 fontWeight: 800,
-                color: "#0f172a",
+                color: colors.text,
                 mb: 0.5,
                 fontSize: { xs: "1.5rem", md: "2rem" },
                 letterSpacing: "-0.5px",
@@ -229,7 +231,7 @@ const MyTasksPage: React.FC = () => {
             >
               My Tasks
             </Typography>
-            <Typography variant="body1" sx={{ color: "#64748b", fontSize: "15px" }}>
+            <Typography variant="body1" sx={{ color: colors.textSecondary, fontSize: "15px" }}>
               Calendar view of your scheduled tasks
             </Typography>
           </Box>
@@ -244,7 +246,7 @@ const MyTasksPage: React.FC = () => {
                 animationFillMode: "both",
               }}
             >
-              <Typography sx={{ fontWeight: 700, color: "#0f172a", fontSize: "15px", mb: 1.5 }}>
+              <Typography sx={{ fontWeight: 700, color: colors.text, fontSize: "15px", mb: 1.5 }}>
                 Reminders
               </Typography>
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
@@ -258,7 +260,7 @@ const MyTasksPage: React.FC = () => {
                       px: 2.5,
                       py: 1.5,
                       borderRadius: "14px",
-                      background: "rgba(255, 255, 255, 0.7)",
+                      background: colors.cardBg,
                       backdropFilter: "blur(12px)",
                       border: `1px solid ${r.tagColor}20`,
                       borderLeft: `4px solid ${r.tagColor}`,
@@ -270,7 +272,7 @@ const MyTasksPage: React.FC = () => {
                         sx={{
                           fontSize: "13.5px",
                           fontWeight: 600,
-                          color: "#0f172a",
+                          color: colors.text,
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
@@ -313,7 +315,7 @@ const MyTasksPage: React.FC = () => {
             {/* Calendar */}
             <Box
               sx={{
-                background: "rgba(255, 255, 255, 0.7)",
+                background: colors.cardBg,
                 backdropFilter: "blur(16px)",
                 borderRadius: "18px",
                 border: "1px solid rgba(255, 255, 255, 0.8)",
@@ -332,16 +334,16 @@ const MyTasksPage: React.FC = () => {
               >
                 <IconButton
                   onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                  sx={{ color: "#64748b" }}
+                  sx={{ color: colors.textSecondary }}
                 >
                   <ChevronLeft />
                 </IconButton>
-                <Typography sx={{ fontWeight: 700, fontSize: "18px", color: "#0f172a" }}>
+                <Typography sx={{ fontWeight: 700, fontSize: "18px", color: colors.text }}>
                   {format(currentMonth, "MMMM yyyy")}
                 </Typography>
                 <IconButton
                   onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                  sx={{ color: "#64748b" }}
+                  sx={{ color: colors.textSecondary }}
                 >
                   <ChevronRight />
                 </IconButton>
@@ -462,7 +464,7 @@ const MyTasksPage: React.FC = () => {
             <Box>
               <Box
                 sx={{
-                  background: "rgba(255, 255, 255, 0.7)",
+                  background: colors.cardBg,
                   backdropFilter: "blur(16px)",
                   borderRadius: "18px",
                   border: "1px solid rgba(255, 255, 255, 0.8)",
@@ -472,7 +474,7 @@ const MyTasksPage: React.FC = () => {
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2.5 }}>
                   <CalendarToday sx={{ fontSize: 18, color: "#0891b2" }} />
-                  <Typography sx={{ fontWeight: 700, color: "#0f172a", fontSize: "15px" }}>
+                  <Typography sx={{ fontWeight: 700, color: colors.text, fontSize: "15px" }}>
                     {selectedDate ? format(selectedDate, "EEEE, MMM d") : "Select a date"}
                   </Typography>
                 </Box>
@@ -505,7 +507,7 @@ const MyTasksPage: React.FC = () => {
                             sx={{
                               fontWeight: 600,
                               fontSize: "13.5px",
-                              color: "#0f172a",
+                              color: colors.text,
                               mb: 0.5,
                             }}
                           >
@@ -515,7 +517,7 @@ const MyTasksPage: React.FC = () => {
                             <Typography
                               sx={{
                                 fontSize: "12px",
-                                color: "#64748b",
+                                color: colors.textSecondary,
                                 mb: 1,
                                 display: "-webkit-box",
                                 WebkitLineClamp: 2,
@@ -547,7 +549,7 @@ const MyTasksPage: React.FC = () => {
                                   fontWeight: 600,
                                   fontSize: "10px",
                                   height: "20px",
-                                  color: "#64748b",
+                                  color: colors.textSecondary,
                                   backgroundColor: "rgba(0,0,0,0.04)",
                                   "& .MuiChip-label": { px: 0.75 },
                                 }}

@@ -41,6 +41,7 @@ import EmptyState from "../components/EmptyState";
 import LoadingState from "../components/LoadingState";
 import AddTaskModal from "../components/AddTaskModal";
 import EditTaskModal from "../components/EditTaskModal";
+import { useAppTheme } from "../context/ThemeContext";
 
 interface Task {
   id: string;
@@ -175,6 +176,7 @@ const Dashboard: React.FC = () => {
   const { state, logout } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { colors } = useAppTheme();
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -337,7 +339,7 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", background: "#f8fafc" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", background: colors.bg, transition: "background 0.3s ease" }}>
       {/* Sidebar */}
       <Sidebar
         userEmail={userEmail}
@@ -363,9 +365,9 @@ const Dashboard: React.FC = () => {
               alignItems: "center",
               px: 2,
               py: 1.5,
-              background: "rgba(255, 255, 255, 0.8)",
+              background: colors.cardBg,
               backdropFilter: "blur(12px)",
-              borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
+              borderBottom: `1px solid ${colors.divider}`,
               position: "sticky",
               top: 0,
               zIndex: 100,
@@ -408,7 +410,7 @@ const Dashboard: React.FC = () => {
                 variant="h4"
                 sx={{
                   fontWeight: 800,
-                  color: "#0f172a",
+                  color: colors.text,
                   mb: 0.5,
                   fontSize: { xs: "1.5rem", md: "2rem" },
                   letterSpacing: "-0.5px",
@@ -428,7 +430,7 @@ const Dashboard: React.FC = () => {
               </Typography>
               <Typography
                 variant="body1"
-                sx={{ color: "#64748b", fontSize: "15px" }}
+                sx={{ color: colors.textSecondary, fontSize: "15px" }}
               >
                 Here's what's happening with your tasks today
               </Typography>
@@ -440,12 +442,12 @@ const Dashboard: React.FC = () => {
                 onClick={handleExportCSV}
                 disabled={tasks.length === 0}
                 sx={{
-                  color: "#64748b",
-                  border: "1px solid rgba(0, 0, 0, 0.08)",
+                  color: colors.textSecondary,
+                  border: `1px solid ${colors.inputBorder}`,
                   borderRadius: "12px",
                   width: 44,
                   height: 44,
-                  background: "rgba(255, 255, 255, 0.7)",
+                  background: colors.inputBg,
                   backdropFilter: "blur(8px)",
                   transition: "all 0.3s ease",
                   "&:hover": {
@@ -463,12 +465,12 @@ const Dashboard: React.FC = () => {
               <IconButton
                 onClick={(e) => setBellAnchor(bellAnchor ? null : e.currentTarget)}
                 sx={{
-                  color: reminders.length > 0 ? "#f59e0b" : "#94a3b8",
-                  border: "1px solid rgba(0, 0, 0, 0.08)",
+                  color: reminders.length > 0 ? "#f59e0b" : colors.textMuted,
+                  border: `1px solid ${colors.inputBorder}`,
                   borderRadius: "12px",
                   width: 44,
                   height: 44,
-                  background: "rgba(255, 255, 255, 0.7)",
+                  background: colors.inputBg,
                   backdropFilter: "blur(8px)",
                   transition: "all 0.3s ease",
                   "&:hover": {
@@ -515,7 +517,7 @@ const Dashboard: React.FC = () => {
                 }}
               >
                 <Box sx={{ p: 2.5 }}>
-                  <Typography sx={{ fontWeight: 700, color: "#0f172a", fontSize: "15px", mb: 2 }}>
+                  <Typography sx={{ fontWeight: 700, color: colors.text, fontSize: "15px", mb: 2 }}>
                     Reminders ({reminders.length})
                   </Typography>
                   {reminders.length === 0 ? (
@@ -546,7 +548,7 @@ const Dashboard: React.FC = () => {
                                 sx={{
                                   fontSize: "13px",
                                   fontWeight: 600,
-                                  color: "#0f172a",
+                                  color: colors.text,
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
                                   whiteSpace: "nowrap",
@@ -638,7 +640,7 @@ const Dashboard: React.FC = () => {
           >
             <Typography
               variant="h6"
-              sx={{ fontWeight: 700, color: "#0f172a" }}
+              sx={{ fontWeight: 700, color: colors.text }}
             >
               Tasks
             </Typography>
@@ -648,21 +650,20 @@ const Dashboard: React.FC = () => {
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  background: "rgba(255, 255, 255, 0.7)",
+                  background: colors.inputBg,
                   backdropFilter: "blur(8px)",
                   borderRadius: "12px",
-                  border: "1px solid rgba(0, 0, 0, 0.08)",
+                  border: `1px solid ${colors.inputBorder}`,
                   px: 1.5,
                   py: 0.5,
                   transition: "all 0.3s ease",
                   "&:focus-within": {
                     borderColor: "#0891b2",
                     boxShadow: "0 2px 12px rgba(8, 145, 178, 0.1)",
-                    background: "rgba(255, 255, 255, 0.95)",
                   },
                 }}
               >
-                <SearchIcon sx={{ color: "#94a3b8", fontSize: 20, mr: 1 }} />
+                <SearchIcon sx={{ color: colors.textMuted, fontSize: 20, mr: 1 }} />
                 <input
                   type="text"
                   placeholder="Search tasks..."
@@ -673,7 +674,7 @@ const Dashboard: React.FC = () => {
                     outline: "none",
                     background: "transparent",
                     fontSize: "13.5px",
-                    color: "#0f172a",
+                    color: colors.text,
                     width: "160px",
                     fontFamily: "inherit",
                   }}
@@ -800,13 +801,13 @@ const Dashboard: React.FC = () => {
               >
                 <Typography
                   variant="h6"
-                  sx={{ color: "#94a3b8", fontWeight: 600 }}
+                  sx={{ color: colors.textMuted, fontWeight: 600 }}
                 >
                   {searchQuery ? "No tasks match your search" : "No tasks in this category"}
                 </Typography>
                 <Typography
                   variant="body2"
-                  sx={{ color: "#cbd5e1", mt: 1 }}
+                  sx={{ color: colors.textMuted, mt: 1 }}
                 >
                   {searchQuery ? "Try a different search term" : "Try selecting a different filter"}
                 </Typography>

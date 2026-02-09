@@ -16,7 +16,6 @@ import {
 import {
   Menu as MenuIcon,
   Person,
-  Notifications,
   Palette,
   Info,
   CameraAlt,
@@ -25,6 +24,7 @@ import {
 import { keyframes } from "@mui/material/styles";
 
 import Sidebar, { SIDEBAR_WIDTH } from "../components/Sidebar";
+import { useAppTheme } from "../context/ThemeContext";
 
 const fadeInUp = keyframes`
   from { opacity: 0; transform: translateY(20px); }
@@ -42,15 +42,15 @@ const getEmailFromToken = (): string => {
   }
 };
 
-const cardSx = {
-  background: "rgba(255, 255, 255, 0.7)",
+const getCardSx = (colors: { cardBg: string; cardBorder: string; cardShadow: string }) => ({
+  background: colors.cardBg,
   backdropFilter: "blur(16px)",
   borderRadius: "18px",
-  border: "1px solid rgba(255, 255, 255, 0.8)",
-  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.04)",
+  border: `1px solid ${colors.cardBorder}`,
+  boxShadow: colors.cardShadow,
   p: 3,
   mb: 3,
-};
+});
 
 const SettingsPage: React.FC = () => {
   const { logout } = useAuth();
@@ -59,9 +59,7 @@ const SettingsPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [dueDateReminders, setDueDateReminders] = useState(true);
-  const [overdueAlerts, setOverdueAlerts] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
+  const { darkMode, toggleDarkMode, colors } = useAppTheme();
 
   // Profile state
   const [username, setUsername] = useState("");
@@ -149,7 +147,7 @@ const SettingsPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", background: "#f8fafc" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", background: colors.bg, transition: "background 0.3s ease" }}>
       <Sidebar
         userEmail={userEmail}
         onLogout={logout}
@@ -172,9 +170,9 @@ const SettingsPage: React.FC = () => {
               alignItems: "center",
               px: 2,
               py: 1.5,
-              background: "rgba(255, 255, 255, 0.8)",
+              background: colors.cardBg,
               backdropFilter: "blur(12px)",
-              borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
+              borderBottom: `1px solid ${colors.divider}`,
               position: "sticky",
               top: 0,
               zIndex: 100,
@@ -207,7 +205,7 @@ const SettingsPage: React.FC = () => {
               variant="h4"
               sx={{
                 fontWeight: 800,
-                color: "#0f172a",
+                color: colors.text,
                 mb: 0.5,
                 fontSize: { xs: "1.5rem", md: "2rem" },
                 letterSpacing: "-0.5px",
@@ -215,7 +213,7 @@ const SettingsPage: React.FC = () => {
             >
               Settings
             </Typography>
-            <Typography variant="body1" sx={{ color: "#64748b", fontSize: "15px" }}>
+            <Typography variant="body1" sx={{ color: colors.textSecondary, fontSize: "15px" }}>
               Manage your account and preferences
             </Typography>
           </Box>
@@ -250,7 +248,7 @@ const SettingsPage: React.FC = () => {
           {/* Profile Card */}
           <Box
             sx={{
-              ...cardSx,
+              ...getCardSx(colors),
               animation: `${fadeInUp} 0.5s ease-out`,
               animationDelay: "0.1s",
               animationFillMode: "both",
@@ -258,7 +256,7 @@ const SettingsPage: React.FC = () => {
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2.5 }}>
               <Person sx={{ fontSize: 20, color: "#0891b2" }} />
-              <Typography sx={{ fontWeight: 700, color: "#0f172a", fontSize: "15px" }}>
+              <Typography sx={{ fontWeight: 700, color: colors.text, fontSize: "15px" }}>
                 Profile
               </Typography>
             </Box>
@@ -314,15 +312,15 @@ const SettingsPage: React.FC = () => {
               </Box>
 
               <Box sx={{ flex: 1 }}>
-                <Typography sx={{ fontWeight: 700, color: "#0f172a", fontSize: "16px" }}>
+                <Typography sx={{ fontWeight: 700, color: colors.text, fontSize: "16px" }}>
                   {displayName}
                 </Typography>
-                <Typography sx={{ color: "#64748b", fontSize: "13px" }}>
+                <Typography sx={{ color: colors.textSecondary, fontSize: "13px" }}>
                   {userEmail}
                 </Typography>
                 <Typography
                   sx={{
-                    color: "#94a3b8",
+                    color: colors.textMuted,
                     fontSize: "11px",
                     mt: 0.5,
                   }}
@@ -336,10 +334,10 @@ const SettingsPage: React.FC = () => {
             <Box
               sx={{
                 pt: 2,
-                borderTop: "1px solid rgba(0, 0, 0, 0.06)",
+                borderTop: `1px solid ${colors.divider}`,
               }}
             >
-              <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#64748b", mb: 1 }}>
+              <Typography sx={{ fontSize: "13px", fontWeight: 600, color: colors.textSecondary, mb: 1 }}>
                 Display Name
               </Typography>
               {editingUsername ? (
@@ -388,7 +386,7 @@ const SettingsPage: React.FC = () => {
                       borderRadius: "10px",
                       textTransform: "none",
                       fontWeight: 600,
-                      color: "#64748b",
+                      color: colors.textSecondary,
                     }}
                   >
                     Cancel
@@ -396,7 +394,7 @@ const SettingsPage: React.FC = () => {
                 </Box>
               ) : (
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <Typography sx={{ fontSize: "14px", color: "#0f172a", fontWeight: 500 }}>
+                  <Typography sx={{ fontSize: "14px", color: colors.text, fontWeight: 500 }}>
                     {displayName}
                   </Typography>
                   <Button
@@ -417,93 +415,18 @@ const SettingsPage: React.FC = () => {
             </Box>
           </Box>
 
-          {/* Notifications Card */}
+          {/* Appearance Card */}
           <Box
             sx={{
-              ...cardSx,
+              ...getCardSx(colors),
               animation: `${fadeInUp} 0.5s ease-out`,
               animationDelay: "0.15s",
               animationFillMode: "both",
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2.5 }}>
-              <Notifications sx={{ fontSize: 20, color: "#f59e0b" }} />
-              <Typography sx={{ fontWeight: 700, color: "#0f172a", fontSize: "15px" }}>
-                Notifications
-              </Typography>
-            </Box>
-
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  py: 1.5,
-                  borderBottom: "1px solid rgba(0, 0, 0, 0.04)",
-                }}
-              >
-                <Box>
-                  <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#0f172a" }}>
-                    Due Date Reminders
-                  </Typography>
-                  <Typography sx={{ fontSize: "12px", color: "#94a3b8" }}>
-                    Show reminders for tasks due today
-                  </Typography>
-                </Box>
-                <Switch
-                  checked={dueDateReminders}
-                  onChange={(e) => setDueDateReminders(e.target.checked)}
-                  sx={{
-                    "& .MuiSwitch-switchBase.Mui-checked": { color: "#0891b2" },
-                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                      backgroundColor: "#0891b2",
-                    },
-                  }}
-                />
-              </Box>
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  py: 1.5,
-                }}
-              >
-                <Box>
-                  <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#0f172a" }}>
-                    Overdue Alerts
-                  </Typography>
-                  <Typography sx={{ fontSize: "12px", color: "#94a3b8" }}>
-                    Highlight overdue tasks in red
-                  </Typography>
-                </Box>
-                <Switch
-                  checked={overdueAlerts}
-                  onChange={(e) => setOverdueAlerts(e.target.checked)}
-                  sx={{
-                    "& .MuiSwitch-switchBase.Mui-checked": { color: "#0891b2" },
-                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-                      backgroundColor: "#0891b2",
-                    },
-                  }}
-                />
-              </Box>
-            </Box>
-          </Box>
-
-          {/* Appearance Card */}
-          <Box
-            sx={{
-              ...cardSx,
-              animation: `${fadeInUp} 0.5s ease-out`,
-              animationDelay: "0.2s",
-              animationFillMode: "both",
-            }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2.5 }}>
               <Palette sx={{ fontSize: 20, color: "#8b5cf6" }} />
-              <Typography sx={{ fontWeight: 700, color: "#0f172a", fontSize: "15px" }}>
+              <Typography sx={{ fontWeight: 700, color: colors.text, fontSize: "15px" }}>
                 Appearance
               </Typography>
             </Box>
@@ -517,16 +440,16 @@ const SettingsPage: React.FC = () => {
               }}
             >
               <Box>
-                <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#0f172a" }}>
+                <Typography sx={{ fontSize: "14px", fontWeight: 600, color: colors.text }}>
                   Dark Mode
                 </Typography>
-                <Typography sx={{ fontSize: "12px", color: "#94a3b8" }}>
+                <Typography sx={{ fontSize: "12px", color: colors.textMuted }}>
                   Switch to a darker color theme
                 </Typography>
               </Box>
               <Switch
                 checked={darkMode}
-                onChange={(e) => setDarkMode(e.target.checked)}
+                onChange={toggleDarkMode}
                 sx={{
                   "& .MuiSwitch-switchBase.Mui-checked": { color: "#0891b2" },
                   "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
@@ -540,30 +463,30 @@ const SettingsPage: React.FC = () => {
           {/* About Card */}
           <Box
             sx={{
-              ...cardSx,
+              ...getCardSx(colors),
               animation: `${fadeInUp} 0.5s ease-out`,
               animationDelay: "0.25s",
               animationFillMode: "both",
             }}
           >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2.5 }}>
-              <Info sx={{ fontSize: 20, color: "#64748b" }} />
-              <Typography sx={{ fontWeight: 700, color: "#0f172a", fontSize: "15px" }}>
+              <Info sx={{ fontSize: 20, color: colors.textSecondary }} />
+              <Typography sx={{ fontWeight: 700, color: colors.text, fontSize: "15px" }}>
                 About
               </Typography>
             </Box>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                <Typography sx={{ fontSize: "13px", color: "#64748b" }}>App Name</Typography>
-                <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#0f172a" }}>FocusTrack</Typography>
+                <Typography sx={{ fontSize: "13px", color: colors.textSecondary }}>App Name</Typography>
+                <Typography sx={{ fontSize: "13px", fontWeight: 600, color: colors.text }}>FocusTrack</Typography>
               </Box>
               <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                <Typography sx={{ fontSize: "13px", color: "#64748b" }}>Version</Typography>
-                <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#0f172a" }}>1.0.0</Typography>
+                <Typography sx={{ fontSize: "13px", color: colors.textSecondary }}>Version</Typography>
+                <Typography sx={{ fontSize: "13px", fontWeight: 600, color: colors.text }}>1.0.0</Typography>
               </Box>
               <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                <Typography sx={{ fontSize: "13px", color: "#64748b" }}>Stack</Typography>
-                <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#0f172a" }}>React + NestJS</Typography>
+                <Typography sx={{ fontSize: "13px", color: colors.textSecondary }}>Stack</Typography>
+                <Typography sx={{ fontSize: "13px", fontWeight: 600, color: colors.text }}>React + NestJS</Typography>
               </Box>
             </Box>
           </Box>

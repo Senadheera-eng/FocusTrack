@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
 import type { SvgIconComponent } from "@mui/icons-material";
+import { useAppTheme } from "../context/ThemeContext";
 
 interface StatsCardProps {
   icon: SvgIconComponent;
@@ -17,21 +18,22 @@ const StatsCard: React.FC<StatsCardProps> = ({
   color,
   bgColor,
 }) => {
+  const { colors } = useAppTheme();
+
   return (
     <Box
       sx={{
-        background: "rgba(255, 255, 255, 0.7)",
+        background: colors.cardBg,
         backdropFilter: "blur(16px)",
         borderRadius: "18px",
-        border: "1px solid rgba(255, 255, 255, 0.8)",
-        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.04)",
+        border: `1px solid ${colors.cardBorder}`,
+        boxShadow: colors.cardShadow,
         p: { xs: 2.5, md: 3 },
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
         cursor: "default",
         "&:hover": {
           transform: "translateY(-4px)",
           boxShadow: "0 12px 28px rgba(0, 0, 0, 0.08)",
-          background: "rgba(255, 255, 255, 0.85)",
         },
       }}
     >
@@ -54,7 +56,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
         variant="h3"
         sx={{
           fontWeight: 800,
-          color: "#0f172a",
+          color: colors.text,
           fontSize: { xs: "1.8rem", md: "2.2rem" },
           letterSpacing: "-0.5px",
           lineHeight: 1,
@@ -66,7 +68,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
       <Typography
         variant="body2"
         sx={{
-          color: "#64748b",
+          color: colors.textSecondary,
           fontWeight: 500,
           fontSize: "13px",
         }}
