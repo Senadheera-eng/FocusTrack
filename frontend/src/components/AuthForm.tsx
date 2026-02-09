@@ -20,9 +20,6 @@ import {
   Visibility,
   VisibilityOff,
   CheckCircle,
-  Google,
-  GitHub,
-  Apple,
 } from "@mui/icons-material";
 import { styled, keyframes } from "@mui/material/styles";
 
@@ -128,22 +125,6 @@ const SubmitButton = styled(Button)({
   "&:disabled": {
     background: "linear-gradient(135deg, #cbd5e1, #94a3b8)",
     boxShadow: "none",
-  },
-});
-
-const SocialButton = styled(IconButton)({
-  width: "50px",
-  height: "50px",
-  border: "1.5px solid rgba(0, 0, 0, 0.06)",
-  borderRadius: "14px",
-  backgroundColor: "rgba(255, 255, 255, 0.6)",
-  backdropFilter: "blur(8px)",
-  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-  "&:hover": {
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    borderColor: "#00d4d4",
-    transform: "translateY(-3px)",
-    boxShadow: "0 8px 24px rgba(0, 212, 212, 0.12)",
   },
 });
 
@@ -429,49 +410,6 @@ const AuthForm: React.FC<AuthFormProps> = ({ isLogin: initialIsLogin }) => {
           ? "Begin your productivity journey today"
           : "Sign in to continue your focus session"}
       </Typography>
-
-      {/* Social Login */}
-      <Box sx={{ display: "flex", justifyContent: "center", gap: 1.5, mb: 3 }}>
-        <SocialButton>
-          <Google sx={{ fontSize: 20, color: "#DB4437" }} />
-        </SocialButton>
-        <SocialButton>
-          <GitHub sx={{ fontSize: 20, color: "#1f2937" }} />
-        </SocialButton>
-        <SocialButton>
-          <Apple sx={{ fontSize: 20, color: "#000" }} />
-        </SocialButton>
-      </Box>
-
-      {/* Divider */}
-      <Box sx={{ display: "flex", alignItems: "center", mb: 3, gap: 2 }}>
-        <Box
-          sx={{
-            flex: 1,
-            height: "1px",
-            background: "linear-gradient(to right, transparent, #e2e8f0)",
-          }}
-        />
-        <Typography
-          variant="caption"
-          sx={{
-            color: "#94a3b8",
-            fontSize: "11px",
-            letterSpacing: "1.5px",
-            textTransform: "uppercase",
-            fontWeight: 500,
-          }}
-        >
-          or continue with email
-        </Typography>
-        <Box
-          sx={{
-            flex: 1,
-            height: "1px",
-            background: "linear-gradient(to left, transparent, #e2e8f0)",
-          }}
-        />
-      </Box>
 
       {/* Error Alert */}
       <Collapse in={!!state.error}>

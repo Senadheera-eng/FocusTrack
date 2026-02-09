@@ -29,6 +29,13 @@ let UsersService = class UsersService {
         const user = this.usersRepository.create({ email, password: hashedPassword });
         return this.usersRepository.save(user);
     }
+    async findById(id) {
+        return this.usersRepository.findOne({ where: { id } });
+    }
+    async updateProfile(id, data) {
+        await this.usersRepository.update(id, data);
+        return this.usersRepository.findOneOrFail({ where: { id } });
+    }
 };
 exports.UsersService = UsersService;
 exports.UsersService = UsersService = __decorate([

@@ -1,0 +1,17 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:16
+    container_name: focustrack-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: focustrack
+    ports:
+      - "5433:5432"
+    volumes:
+      - focustrack_pgdata:/var/lib/postgresql/data
+
+volumes:
+  focustrack_pgdata:

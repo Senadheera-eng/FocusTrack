@@ -15,6 +15,7 @@ import {
 } from "@mui/icons-material";
 import { format } from "date-fns";
 import Timer from "./Timer";
+import { useAppTheme } from "../context/ThemeContext";
 
 interface Task {
   id: string;
@@ -80,16 +81,17 @@ const TaskCard: React.FC<TaskCardProps> = ({
 }) => {
   const statusConfig = getStatusConfig(task.status);
   const priorityConfig = getPriorityConfig(task.priority);
+  const { colors } = useAppTheme();
 
   return (
     <Box
       sx={{
-        background: "rgba(255, 255, 255, 0.7)",
+        background: colors.cardBg,
         backdropFilter: "blur(16px)",
         borderRadius: "18px",
-        border: "1px solid rgba(255, 255, 255, 0.8)",
+        border: `1px solid ${colors.cardBorder}`,
         borderLeft: `4px solid ${statusConfig.borderColor}`,
-        boxShadow: "0 4px 20px rgba(0, 0, 0, 0.04)",
+        boxShadow: colors.cardShadow,
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
         height: "100%",
         display: "flex",
@@ -98,7 +100,6 @@ const TaskCard: React.FC<TaskCardProps> = ({
         "&:hover": {
           transform: "translateY(-4px)",
           boxShadow: "0 12px 28px rgba(0, 0, 0, 0.08)",
-          background: "rgba(255, 255, 255, 0.85)",
           borderLeftColor: statusConfig.color,
         },
       }}
@@ -117,7 +118,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
             variant="h6"
             sx={{
               fontWeight: 700,
-              color: "#0f172a",
+              color: colors.text,
               lineHeight: 1.3,
               flex: 1,
               fontSize: "16px",
@@ -158,7 +159,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
           <Typography
             variant="body2"
             sx={{
-              color: "#64748b",
+              color: colors.textSecondary,
               mb: 2,
               fontSize: "13.5px",
               lineHeight: 1.6,
@@ -183,7 +184,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
         sx={{
           px: 3,
           py: 2,
-          borderTop: "1px solid rgba(0, 0, 0, 0.04)",
+          borderTop: `1px solid ${colors.divider}`,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",

@@ -14,6 +14,12 @@ export class User {
   @Exclude() // never return password in API responses
   password: string;
 
+  @Column({ nullable: true })
+  username?: string;
+
+  @Column({ type: 'text', nullable: true })
+  profilePicture?: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

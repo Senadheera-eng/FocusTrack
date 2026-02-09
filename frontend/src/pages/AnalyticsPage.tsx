@@ -20,6 +20,7 @@ import { keyframes } from "@mui/material/styles";
 import Sidebar, { SIDEBAR_WIDTH } from "../components/Sidebar";
 import StatsCard from "../components/StatsCard";
 import ProductivityCharts from "../components/ProductivityCharts";
+import { useAppTheme } from "../context/ThemeContext";
 
 interface Task {
   id: string;
@@ -73,6 +74,7 @@ const AnalyticsPage: React.FC = () => {
   const { state, logout } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const { colors } = useAppTheme();
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [prodStats, setProdStats] = useState<ProductivityStats | null>(null);
@@ -116,7 +118,7 @@ const AnalyticsPage: React.FC = () => {
   ).length;
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", background: "#f8fafc" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", background: colors.bg, transition: "background 0.3s ease" }}>
       <Sidebar
         userEmail={userEmail}
         onLogout={logout}
@@ -179,7 +181,7 @@ const AnalyticsPage: React.FC = () => {
               variant="h4"
               sx={{
                 fontWeight: 800,
-                color: "#0f172a",
+                color: colors.text,
                 mb: 0.5,
                 fontSize: { xs: "1.5rem", md: "2rem" },
                 letterSpacing: "-0.5px",
@@ -189,7 +191,7 @@ const AnalyticsPage: React.FC = () => {
             </Typography>
             <Typography
               variant="body1"
-              sx={{ color: "#64748b", fontSize: "15px" }}
+              sx={{ color: colors.textSecondary, fontSize: "15px" }}
             >
               Track your productivity and task insights
             </Typography>
@@ -255,7 +257,7 @@ const AnalyticsPage: React.FC = () => {
           >
             <Box
               sx={{
-                background: "rgba(255, 255, 255, 0.7)",
+                background: colors.cardBg,
                 backdropFilter: "blur(16px)",
                 borderRadius: "18px",
                 border: "1px solid rgba(255, 255, 255, 0.8)",
@@ -267,13 +269,13 @@ const AnalyticsPage: React.FC = () => {
               <Typography sx={{ fontSize: "36px", fontWeight: 800, color: "#0891b2" }}>
                 {completionRate}%
               </Typography>
-              <Typography sx={{ fontSize: "13px", color: "#64748b", fontWeight: 600 }}>
+              <Typography sx={{ fontSize: "13px", color: colors.textSecondary, fontWeight: 600 }}>
                 Completion Rate
               </Typography>
             </Box>
             <Box
               sx={{
-                background: "rgba(255, 255, 255, 0.7)",
+                background: colors.cardBg,
                 backdropFilter: "blur(16px)",
                 borderRadius: "18px",
                 border: "1px solid rgba(255, 255, 255, 0.8)",
@@ -285,13 +287,13 @@ const AnalyticsPage: React.FC = () => {
               <Typography sx={{ fontSize: "36px", fontWeight: 800, color: "#10b981" }}>
                 {prodStats?.streakDays ?? 0}
               </Typography>
-              <Typography sx={{ fontSize: "13px", color: "#64748b", fontWeight: 600 }}>
+              <Typography sx={{ fontSize: "13px", color: colors.textSecondary, fontWeight: 600 }}>
                 Day Streak
               </Typography>
             </Box>
             <Box
               sx={{
-                background: "rgba(255, 255, 255, 0.7)",
+                background: colors.cardBg,
                 backdropFilter: "blur(16px)",
                 borderRadius: "18px",
                 border: "1px solid rgba(255, 255, 255, 0.8)",
@@ -303,7 +305,7 @@ const AnalyticsPage: React.FC = () => {
               <Typography sx={{ fontSize: "36px", fontWeight: 800, color: overdueTasks > 0 ? "#ef4444" : "#94a3b8" }}>
                 {overdueTasks}
               </Typography>
-              <Typography sx={{ fontSize: "13px", color: "#64748b", fontWeight: 600 }}>
+              <Typography sx={{ fontSize: "13px", color: colors.textSecondary, fontWeight: 600 }}>
                 Overdue Tasks
               </Typography>
             </Box>

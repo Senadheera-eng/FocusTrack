@@ -17,12 +17,15 @@ const common_1 = require("@nestjs/common");
 const auth_service_1 = require("./auth.service");
 const register_dto_1 = require("./dto/register.dto");
 const login_dto_1 = require("./dto/login.dto");
-const common_2 = require("@nestjs/common");
+const update_profile_dto_1 = require("./dto/update-profile.dto");
 const jwt_auth_guard_1 = require("./guards/jwt-auth.guard");
+const users_service_1 = require("../users/users.service");
 let AuthController = class AuthController {
     authService;
-    constructor(authService) {
+    usersService;
+    constructor(authService, usersService) {
         this.authService = authService;
+        this.usersService = usersService;
     }
     async register(dto) {
         return this.authService.register(dto);
@@ -30,11 +33,22 @@ let AuthController = class AuthController {
     async login(dto) {
         return this.authService.login(dto);
     }
-    getProfile(req) {
+    async getProfile(req) {
+        const user = await this.usersService.findById(req.user.userId);
         return {
             userId: req.user.userId,
             email: req.user.email,
-            message: 'This is a protected route — you are authenticated!',
+            username: user?.username || null,
+            profilePicture: user?.profilePicture || null,
+        };
+    }
+    async updateProfile(req, dto) {
+        const user = await this.usersService.updateProfile(req.user.userId, dto);
+        return {
+            userId: user.id,
+            email: user.email,
+            username: user.username || null,
+            profilePicture: user.profilePicture || null,
         };
     }
 };
@@ -55,15 +69,25 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
 __decorate([
-    (0, common_2.Get)('me'),
-    (0, common_2.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    __param(0, (0, common_2.Req)()),
+    (0, common_1.Get)('me'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], AuthController.prototype, "getProfile", null);
+__decorate([
+    (0, common_1.Patch)('profile'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, update_profile_dto_1.UpdateProfileDto]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "updateProfile", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('auth'),
-    __metadata("design:paramtypes", [auth_service_1.AuthService])
+    __metadata("design:paramtypes", [auth_service_1.AuthService,
+        users_service_1.UsersService])
 ], AuthController);
 //# sourceMappingURL=auth.controller.js.map

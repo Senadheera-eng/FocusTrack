@@ -1,9 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import { json } from 'express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // Disable default body parser so we can set a higher limit for profile pictures
+  const app = await NestFactory.create(AppModule, { bodyParser: false });
+  app.use(json({ limit: '5mb' }));
 
   // Enable CORS – allow frontend origin
   app.enableCors({
