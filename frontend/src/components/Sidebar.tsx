@@ -137,16 +137,15 @@ const Sidebar: React.FC<SidebarProps> = ({
             animation: `${floatFast} 4s ease-in-out infinite`,
           }}
         >
-          <Typography
-            sx={{
-              fontWeight: 900,
-              fontSize: "18px",
-              color: "white",
-              letterSpacing: "-0.5px",
+          <img
+            src="/favicon.svg"
+            alt="FocusTrack"
+            style={{
+              width: "32px",
+              height: "32px",
+              borderRadius: "6px",
             }}
-          >
-            FT
-          </Typography>
+          />
         </Box>
         <Box>
           <Typography
